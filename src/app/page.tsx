@@ -81,21 +81,6 @@ export default function Home() {
       <header className="border-b border-border">
         <div className={cn(column, "flex h-16 items-center justify-between")}>
           <span className="text-heading-16 font-semibold">{APP_NAME}</span>
-          <nav className="flex items-center gap-6" aria-label="Main navigation">
-            <a
-              href="#about"
-              className="focus-ring rounded-sm text-label-14 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              About
-            </a>
-            <Link
-              href="/login"
-              prefetch={false}
-              className="focus-ring rounded-sm text-label-14 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Sign in
-            </Link>
-          </nav>
         </div>
       </header>
 
