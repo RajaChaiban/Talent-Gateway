@@ -68,5 +68,9 @@ export const config = {
     "/app/:path*",
     // Sign-in, so a signed-in visitor is sent on.
     "/login",
+    // API routes, so a fetch from the app refreshes the session too. The
+    // proxy never redirects them (they are not page navigations under /app);
+    // each route handler checks the user itself.
+    "/api/:path*",
   ],
 };

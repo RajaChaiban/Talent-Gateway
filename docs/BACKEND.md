@@ -1,6 +1,6 @@
 # BACKEND.md — server-side design
 
-Everything that runs on the server for this app. Today that is sign-in with Supabase Auth, the protected `/app` area, the jobs list and creating a job. There are no model calls, no workflows and no screening pipeline yet; those sections stay empty until the feature that fills them is merged.
+Everything that runs on the server for this app. Today that is sign-in with Supabase Auth, the protected `/app` area, the jobs list, creating a job, and the job page with its threshold editor and `PATCH /api/jobs/[id]`. There are no model calls, no workflows and no screening pipeline yet; those sections stay empty until the feature that fills them is merged.
 
 **This document describes the code on `main`.** Two rules keep it that way:
 
@@ -19,21 +19,28 @@ Next.js on Vercel, with Supabase (Postgres, Auth, Storage) as the system of reco
 | `/login` | Partial prerender: static card, the form streamed per request | The `next` query value |
 | `/app` | Partial prerender: static header and frame, the account and the jobs list streamed per request | The session cookies, then `jobs` with a resume count per job |
 | `/app/jobs/new` | Partial prerender: static frame, the form streamed per request | The session cookies |
+| `/app/jobs/[id]` | Partial prerender: static header and frame, the job streamed per request; the threshold editor is a client component that saves through `PATCH /api/jobs/[id]` | The session cookies, then one `jobs` row and the job's resume count |
+| `/api/jobs/[id]` | Dynamic route handler | The session cookies, then an update of one `jobs` row |
 | `/auth/signed-out` | Dynamic route handler | The session cookies |
 
-Data access lives in `src/lib/<feature>/queries.ts`. A query takes the caller's Supabase client instead of creating one, so the page decides whose access rules apply. `listJobs` reads the newest 100 jobs with `resumes(count)` in the same query, and leaves the description out because the list never shows it. A failed database call throws `JobsDataError`, which the `/app` error boundary turns into a retryable message.
+Data access lives in `src/lib/<feature>/queries.ts`. A query takes the caller's Supabase client instead of creating one, so the page decides whose access rules apply. `listJobs` reads the newest 100 jobs with `resumes(count)` in the same query, and leaves the description out because the list never shows it. The job page reads the job with `getJob` and its resume count with `countResumes` (a head-only count) in parallel; an id that is not a UUID, or a job the recruiter cannot see, renders the `/app` not-found page. A failed database call throws `JobsDataError`, which the `/app` error boundary turns into a retryable message and a route handler turns into a 500 with a safe message.
+
+The threshold editor on the job page saves each slider when it is released (a run of arrow-key presses waits 500 ms and sends only its last value). Saves for one field go one at a time, last choice wins; a failed save puts the slider back to the stored value and says so beside it.
 
 Writes go through server actions. `createJobAction` parses the form with `createJobSchema` (`src/lib/jobs/schemas.ts`) before it touches the database: the two thresholds arrive on the 0.0 to 10.0 scale and are stored as whole tenths (8.5 is saved as 85), and a value with more than one decimal is rejected, not rounded. When the save fails, the action logs the Postgres error code only and returns the typed text, so nothing the recruiter wrote is lost.
 
 ## 2. Project layout
 
-Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. `src/app/api` does not exist yet. The request proxy is `src/proxy.ts`.
+Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. The request proxy is `src/proxy.ts`. The JSON error shape (`http.ts`) and the same-origin check (`http-origin.ts`) sit directly in `src/lib`.
 
 ```
 src/
+  app/
+    api/
+      jobs/                       `[id]/route.ts`: PATCH a job's thresholds
   lib/
-    auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
-    jobs/                         job queries that take the caller's client (`queries.ts`), input schemas (`schemas.ts`), row types with scores marked as stored tenths (`types.ts`) and date and count labels (`helpers.ts`)
+    auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`), the route-handler guard (`require-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
+    jobs/                         job queries that take the caller's client (`queries.ts`, `resume-count.ts`), input schemas (`schemas.ts`), row types with scores marked as stored tenths (`types.ts`), the API body on the 0 to 10 scale (`serialize.ts`), route-handler responses (`api.ts`), the threshold editor's save sequencer and commit scheduler, and date and count labels (`helpers.ts`)
     supabase/                     the server Supabase client (`server.ts`), the check of its two public variables (`public-env.ts`) and the database types generated from the hosted schema (`database.types.ts`)
 ```
 
@@ -43,6 +50,7 @@ Supabase Auth, email and password. Sign-ups are disabled on the Supabase project
 
 - `/login` is the only page that signs people in. `/` is public. Everything under `/app` needs a signed-in user.
 - Two checks protect `/app`. The proxy (`src/proxy.ts`, on `/app/**` and `/login`) refreshes the session and redirects page navigations: signed out on `/app` goes to `/login?next=...`, signed in on `/login` goes on to `next`. Then every `/app` page calls `requireSignedInUser()` itself, because the proxy is only a first check and a layout does not gate its pages.
+- API routes (`/api/**`) are also in the proxy matcher, so a `fetch` from the app refreshes the session, but the proxy never redirects them. Each route handler calls `requireUser()`, which asks Supabase Auth and answers JSON instead of redirecting: 401 `unauthorized` when signed out, 503 `auth_unavailable` when Supabase Auth cannot answer. A handler that changes data then calls `requireSameOrigin()`, which refuses with 403 `forbidden` any request not sent by this app's own pages (`Sec-Fetch-Site: same-origin`, or an `Origin` equal to the request's own scheme and host), so another site cannot use the recruiter's cookies to change data.
 - When Supabase rejects a session that the cookie still claims, the page redirects to `/auth/signed-out`, which clears the cookies so the proxy cannot bounce the browser back. When Supabase Auth cannot answer at all, the page shows a retryable error instead of signing the user out.
 - Sign-out ends only this browser's session (`scope: "local"`), because the demo login is shared.
 - Who is signed in is always asked from Supabase (`auth.getUser()`), never read from the unverified cookie.
@@ -56,6 +64,7 @@ One row per method and path.
 | Method | Path | Auth | Input | Does | Returns |
 |---|---|---|---|---|---|
 | GET | `/auth/signed-out` | Public | Query `next` (optional) | Clears the Supabase session cookies with no network call. `maxDuration` 5 | 303 redirect to `/login?next=...` |
+| PATCH | `/api/jobs/[id]` | Session, same origin | JSON `{ top_talent_threshold?, invite_threshold? }`, at least one, each a number from 0 to 10 with at most one decimal | Checks the user, then the origin, then the input, then updates the job's thresholds (stored as tenths). `maxDuration` 10 | 200 `{ data: job }` with scores on the 0 to 10 scale; 400, 401, 403, 404, 500 or 503 `{ error: { code, message } }` |
 
 ### Server actions
 
@@ -88,13 +97,22 @@ Set in `.env.local` for local work (git-ignored) and in the Vercel project for d
 
 ## 9. Errors and limits
 
-No error codes yet. When route handlers exist, each code of an exported `...ErrorCode` union or `...ERROR_CODES` list is listed here in backticks with its status.
+Every route handler error has the body `{ "error": { "code": ..., "message": ... } }` (`jsonError` in `src/lib/http.ts`). Messages are safe to show: a database error is logged by its Postgres code only (`logServerError`) and never sent.
+
+| Code | Status | When |
+|---|---|---|
+| `invalid_input` | 400 | The id is not a UUID, the body is not JSON, or a field fails its schema; the message names the field |
+| `unauthorized` | 401 | No valid session |
+| `forbidden` | 403 | A state-changing request that did not come from this app's own pages |
+| `not_found` | 404 | No job with this id, or row-level security hides it |
+| `server_error` | 500 | A database call failed |
+| `auth_unavailable` | 503 | Supabase Auth could not answer; try again |
 
 ## 10. Testing
 
 | Layer | Tool | Covers |
 |---|---|---|
-| Unit | Vitest (`npm run test`) | Files named `*.test.ts` beside the code they test: sign-in checks, the proxy rule and matcher, the page guard, the signed-out route, the env check, the jobs query against a stand-in client, and `scripts/check-backend-doc.test.ts` (the document check itself). No test calls the network |
+| Unit | Vitest (`npm run test`) | Files named `*.test.ts` beside the code they test: sign-in checks, the proxy rule and matcher, the page guard, the route-handler guard, the same-origin check, the signed-out route, `PATCH /api/jobs/[id]` (401, 403, 400, 404, 500 and success), the threshold editor's save sequencer, commit scheduler and fetch helper, the env check, the jobs queries against a stand-in client, and `scripts/check-backend-doc.test.ts` (the document check itself). No test calls the network |
 | Document | `npm run docs:check` | This document names every route, server action, environment variable, `src/lib` and `src/app/api` folder, model and error code |
 | Design | `npm run design:contrast` | Every color pair in `src/app/globals.css` meets WCAG AA in both themes |
 
