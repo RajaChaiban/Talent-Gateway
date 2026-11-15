@@ -45,3 +45,6 @@ next-env.d.ts
 
 # browser test screenshots
 .playwright-mcp/
+
+# the take-home brief: local reference only
+/ASSESSMENT.md
