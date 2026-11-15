@@ -2,7 +2,7 @@
 
 The data model for talent-gateway on Supabase Postgres: four tables, one storage bucket, a single demo tenant. How the server uses these tables is in [BACKEND.md](BACKEND.md).
 
-**Status: applied.** The hosted database matches this file. Two migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`. No application code reads these tables yet; only sign-in uses the project so far.
+**Status: applied.** The hosted database matches this file. Two migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`. The app reads `jobs` and a resume count per job (the list on `/app`) and inserts into `jobs` (the create-job form); the other tables are not written yet.
 
 Supabase plays the customer's existing system here: the system of record that the Vercel pieces connect to rather than replace.
 
@@ -189,5 +189,5 @@ All foreign keys cascade from `jobs` down, so deleting a job removes its resumes
 - Schema changes are SQL files in `supabase/migrations/`, applied with the Supabase CLI. No dashboard edits.
 - One migration per pull request that needs one, named for what it does.
 - Limits that exist both in SQL and in `src/lib/config.ts` (the threshold defaults, the bucket's size and file-type limits) change together.
-- After a schema change, regenerate the database types and commit them in the same pull request.
+- After a schema change, regenerate the database types (`supabase gen types typescript --linked --schema public > src/lib/supabase/database.types.ts`) and commit them in the same pull request. That file is generated: never edit it by hand.
 - Update this file in the same pull request as the migration.

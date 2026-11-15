@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { io } from "next/cache";
 import { cookies } from "next/headers";
+import type { Database } from "./database.types";
 import { getPublicSupabaseEnv } from "./public-env";
 
 /**
@@ -21,7 +22,7 @@ export async function createClient() {
   await io();
   const env = getPublicSupabaseEnv();
 
-  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient<Database>(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

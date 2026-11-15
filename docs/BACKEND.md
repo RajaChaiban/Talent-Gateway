@@ -1,6 +1,6 @@
 # BACKEND.md — server-side design
 
-Everything that runs on the server for this app. **Today that is nothing:** the app is one static landing page. There are no route handlers, no server actions, no database, no sign-in, no model calls and no environment variables. Each section below is empty until the feature that fills it is merged.
+Everything that runs on the server for this app. Today that is sign-in with Supabase Auth, the protected `/app` area, the jobs list and creating a job. There are no model calls, no workflows and no screening pipeline yet; those sections stay empty until the feature that fills them is merged.
 
 **This document describes the code on `main`.** Two rules keep it that way:
 
@@ -11,7 +11,19 @@ The section numbers are fixed: `npm run docs:check` finds sections 2, 4, 5, 8 an
 
 ## 1. Shape of the backend
 
-None yet. The landing page (`/`) is prerendered at build time and reads no request data.
+Next.js on Vercel, with Supabase (Postgres, Auth, Storage) as the system of record. The app holds the anon key only and acts as the signed-in recruiter, so row-level security in the database decides what every query returns.
+
+| Route | Rendering | Reads |
+|---|---|---|
+| `/` | Static: prerendered at build time | Nothing per request |
+| `/login` | Partial prerender: static card, the form streamed per request | The `next` query value |
+| `/app` | Partial prerender: static header and frame, the account and the jobs list streamed per request | The session cookies, then `jobs` with a resume count per job |
+| `/app/jobs/new` | Partial prerender: static frame, the form streamed per request | The session cookies |
+| `/auth/signed-out` | Dynamic route handler | The session cookies |
+
+Data access lives in `src/lib/<feature>/queries.ts`. A query takes the caller's Supabase client instead of creating one, so the page decides whose access rules apply. `listJobs` reads the newest 100 jobs with `resumes(count)` in the same query, and leaves the description out because the list never shows it. A failed database call throws `JobsDataError`, which the `/app` error boundary turns into a retryable message.
+
+Writes go through server actions. `createJobAction` parses the form with `createJobSchema` (`src/lib/jobs/schemas.ts`) before it touches the database: the two thresholds arrive on the 0.0 to 10.0 scale and are stored as whole tenths (8.5 is saved as 85), and a value with more than one decimal is rejected, not rounded. When the save fails, the action logs the Postgres error code only and returns the typed text, so nothing the recruiter wrote is lost.
 
 ## 2. Project layout
 
@@ -21,7 +33,8 @@ Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. `src
 src/
   lib/
     auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
-    supabase/                     the server Supabase client (`server.ts`) and the check of its two public variables (`public-env.ts`)
+    jobs/                         job queries that take the caller's client (`queries.ts`), input schemas (`schemas.ts`), row types with scores marked as stored tenths (`types.ts`) and date and count labels (`helpers.ts`)
+    supabase/                     the server Supabase client (`server.ts`), the check of its two public variables (`public-env.ts`) and the database types generated from the hosted schema (`database.types.ts`)
 ```
 
 ## 3. Auth and access
@@ -50,6 +63,7 @@ One row per method and path.
 |---|---|---|---|---|---|
 | `signIn` | `src/app/login/actions.ts` | Public | Form fields `email`, `password`, `next` | Checks the input, signs in with Supabase Auth, then redirects to `next` | Field errors or one form error; redirects on success |
 | `signOut` | `src/app/app/actions.ts` | Session | None | Ends this browser's session | Redirects to `/` |
+| `createJobAction` | `src/app/app/jobs/new/actions.ts` | Session | Form fields `title`, `description`, `top_talent_threshold`, `invite_threshold` (0.0 to 10.0) | Checks the input and inserts the job | Field errors or one form error with the typed values kept; redirects to `/app/jobs/[id]` on success |
 
 ## 5. Model calls
 
@@ -80,7 +94,7 @@ No error codes yet. When route handlers exist, each code of an exported `...Erro
 
 | Layer | Tool | Covers |
 |---|---|---|
-| Unit | Vitest (`npm run test`) | `scripts/check-backend-doc.test.ts`: the document check itself, against small fixture trees and against this repository |
+| Unit | Vitest (`npm run test`) | Files named `*.test.ts` beside the code they test: sign-in checks, the proxy rule and matcher, the page guard, the signed-out route, the env check, the jobs query against a stand-in client, and `scripts/check-backend-doc.test.ts` (the document check itself). No test calls the network |
 | Document | `npm run docs:check` | This document names every route, server action, environment variable, `src/lib` and `src/app/api` folder, model and error code |
 | Design | `npm run design:contrast` | Every color pair in `src/app/globals.css` meets WCAG AA in both themes |
 

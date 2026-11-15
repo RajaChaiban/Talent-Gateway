@@ -5,7 +5,7 @@ export const APP_DESCRIPTION =
   "Intelligent resume screening and candidate ranking for modern hiring teams.";
 
 /** Score bands stored in tenths (0 to 100), representing 0.0 to 10.0 */
-export const SCORE_BANDS = {
+const SCORE_BANDS = {
   /** Top talent: >= 8.0 (green), Consider: 5.0 - 7.9 (amber), Low match: < 5.0 (red) */
   trafficLight: { green: asStored(80), amber: asStored(50) },
 } as const;
@@ -14,13 +14,6 @@ export const SCORE_BANDS = {
 export const JOB_THRESHOLD_DEFAULTS = {
   topTalent: asStored(80),
   invite: asStored(70),
-} as const;
-
-/** ATS scoring thresholds */
-export const ATS_THRESHOLDS = {
-  passScoreTenths: asStored(60), // 6.0
-  minExtractedChars: 300,
-  maxNoiseRatio: 0.15,
 } as const;
 
 export type TrafficLight = "green" | "amber" | "red";

@@ -7,8 +7,7 @@
  * types, so passing one where the other belongs is a compile error: the only way
  * from `StoredScore` to `Score` is `toScore`, and back is `toStored`.
  *
- * The compiler is the primary guard against converting anywhere else; the text
- * search in score-conversion-guard.test.ts is a secondary check.
+ * The compiler is the guard against converting anywhere else.
  */
 
 declare const storedBrand: unique symbol;

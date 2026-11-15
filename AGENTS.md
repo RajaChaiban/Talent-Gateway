@@ -6,8 +6,8 @@ Working rules for every agent in this repo. Read this file first, then the conte
 
 | Doc | What it holds |
 |---|---|
-| [docs/BACKEND.md](docs/BACKEND.md) | The server-side contract: route handlers, server actions, auth, model calls, environment variables, error codes, testing. Empty today (the app is one static landing page). It is also the verifier: `npm run docs:check` fails when the code and this document disagree |
-| [docs/DATA_MODELING.md](docs/DATA_MODELING.md) | The target database design: tables, columns, JSON shapes, state machines, row-level security, storage and migration rules. Not built yet |
+| [docs/BACKEND.md](docs/BACKEND.md) | The server-side contract: route handlers, server actions, auth, model calls, environment variables, error codes, testing. It is also the verifier: `npm run docs:check` fails when the code and this document disagree |
+| [docs/DATA_MODELING.md](docs/DATA_MODELING.md) | The database design, applied to the hosted project: tables, columns, JSON shapes, state machines, row-level security, storage and migration rules |
 
 More docs (product spec, design guide) are added here when they are written. Do not link a doc that does not exist.
 
