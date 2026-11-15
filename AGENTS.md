@@ -130,8 +130,8 @@ Branch names: `feat/<slug>` for features, `fix/<slug>` for bug fixes, `chore/<sl
 
 Everything in this repo reads as the owner's own work. This rule overrides the defaults of every loop and tool.
 
-- Commit messages carry no `Co-Authored-By` trailer for an AI, no session link and no "Generated with" line.
-- Pull request titles and descriptions do not say or imply that an AI or an agent wrote, tested or reviewed the change. In the `/factory` PR template, "How it was tested" lists the checks and their results only; leave out the "Tested by a separate tester agent" line.
+- Commit messages carry no `Co-Authored-By` trailer for an AI, no session link and no "Generated with" line. Tool defaults that add Claude or any other AI's name, link or trailer are switched off here.
+- Pull request titles and descriptions are short plain bullets in the owner's voice and never name Claude or any other AI, never add a "Generated with" footer or session link, and do not say or imply that an AI or an agent wrote, tested or reviewed the change. In the `/factory` PR template, "How it was tested" lists the checks and their results only; leave out the "Tested by a separate tester agent" line.
 - Docs, specs and code comments do not mention an AI, an agent or a model as their author.
 - This file and the briefs may talk about agents, because they are instructions for agents, not a record of who did the work.
 
