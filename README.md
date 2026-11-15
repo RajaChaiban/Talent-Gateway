@@ -95,11 +95,11 @@ Status: draft.
 
 ## Known limitations
 
-- Uploading, scoring and the invitation are not built yet; a signed-in recruiter can only see the jobs list.
 - Sample candidates on the landing page are invented.
+- Any picture in a resume sets it aside: the check cannot tell a photo from a logo, and a recruiter can override it with "Score anyway".
 - Scores are a first filter. They have not been checked against real hiring outcomes or for bias.
 - Scanned resumes are set aside, not read by OCR.
-- The invitation email is a stand-in until a sending domain is set up.
+- Invitation emails go through a mail provider's test sender and are delivered to one demo inbox until a sending domain is set up.
 - Single demo tenant: every signed-in user sees every job.
 
 ## Development tooling
@@ -110,14 +110,18 @@ Status: draft.
 - **Agent instructions.** `AGENTS.md` holds the working rules, review loops and delivery workflow used on this repository.
 - **Delivery.** One feature per branch and one pull request per feature, merged with a merge commit so the full history stays.
 
-### How AI behaviour will be validated
+### How AI behaviour was validated
 
-Status: planned.
+The full record, with every run's report, is in [docs/EVALUATION.md](docs/EVALUATION.md). In short, four layers:
 
-- Model output must match a schema; output that does not parse is retried once and then fails the resume instead of being guessed.
-- Unit tests run against a stand-in model, so the pipeline and the "no model call for a set-aside resume" rule are proven without network access.
-- A fixed set of sample resumes with expected ranges is scored against the real model before each release.
-- A recruiter's override and approval rates are logged, so drift shows up in use.
+1. **Schema.** Model output must match a schema; output that does not parse is retried once and then fails the resume instead of being guessed.
+2. **Unit tests against a stand-in model.** The pipeline, the score arithmetic and the "no model call for a set-aside resume" rule are proven in CI without network access.
+3. **An evaluation set on the real model** (`npm run eval`). Eight tests state what should happen before the model runs: real files through extraction and the ATS check, role match, one factor changed at a time, stability over three runs, a resume that asks for a score of 100, a strict and a loose job description, the recruiter's score bars, and five job types with five resumes each. A run writes a dated report and fails when a pass mark is missed.
+4. **A larger model as a reference.** The same prompt and the same 25 cases were run on a much larger model and compared score by score: the same role match on every case both scored, an average difference of 0.24 on the 10 scale, at about 46 times the cost and twice the time. That is the evidence for using the small model.
+
+What the tests changed: the model stopped doing arithmetic. It now judges each must-have of the job description, and the code adds up the score, because the evaluation showed the model did not follow scoring rules written in the prompt. Every attempt, including the ones that failed, is kept in `docs/evals/`.
+
+What they do not prove is stated in the same document: the bands are the author's judgement, the set is a regression check and not a benchmark, and nothing here measures fairness.
 
 ## Run it locally
 
