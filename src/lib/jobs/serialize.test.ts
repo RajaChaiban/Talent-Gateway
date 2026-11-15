@@ -10,6 +10,7 @@ const job: Job = {
   description: "Build APIs.",
   top_talent_threshold: asStored(85),
   invite_threshold: asStored(70),
+  status: "CREATED",
   created_at: "2026-03-05T10:00:00Z",
 };
 

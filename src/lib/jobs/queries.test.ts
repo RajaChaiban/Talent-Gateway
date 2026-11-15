@@ -15,6 +15,7 @@ function clientReturning(result: Result) {
 const row = {
   id: "11111111-1111-4111-8111-111111111111",
   title: "Senior Frontend Engineer",
+  status: "CREATED",
   created_at: "2026-11-14T10:00:00Z",
   top_talent_threshold: 80,
   invite_threshold: 70,

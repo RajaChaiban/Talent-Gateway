@@ -2,7 +2,7 @@
 
 The data model for talent-gateway on Supabase Postgres: four tables, one storage bucket, a single demo tenant. How the server uses these tables is in [BACKEND.md](BACKEND.md).
 
-**Status: applied.** The hosted database matches this file. Two migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The `ats_*` columns and `run_id` are left at their defaults; `candidates` and `invitations` are not written yet.
+**Status: applied.** The hosted database matches this file. Three migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`, then `job_status`, which stores the state of a job's analysis run again. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The `ats_*` columns and `run_id` are left at their defaults; `candidates` and `invitations` are not written yet.
 
 Supabase plays the customer's existing system here: the system of record that the Vercel pieces connect to rather than replace.
 
@@ -40,6 +40,7 @@ Conventions: `uuid` primary keys with `gen_random_uuid()`, `timestamptz` with `d
 | `description` | text | no | | The pasted job description |
 | `top_talent_threshold` | int | no | `80` | check 0–100 (shown as 8.0) |
 | `invite_threshold` | int | no | `70` | check 0–100 (shown as 7.0). Only highlights who to review; it never sends anything |
+| `status` | text | no | `'CREATED'` | check in `CREATED`, `ANALYZING`, `DONE`, `ERROR`. The state of the job's analysis run, settled from its resumes' results |
 | `created_at` | timestamptz | no | `now()` | |
 
 ### resumes
@@ -155,7 +156,6 @@ Derived values, computed in code and never stored:
 | Traffic light | green ≥ 8.0, amber 5.0–7.9, red < 5.0 (on `match_score`; stored 80 / 50) |
 | Top talent | `match_score ≥ jobs.top_talent_threshold` |
 | Suggested invite | `match_score ≥ jobs.invite_threshold` |
-| Job progress | counted from the resumes' statuses; there is no job status column to fall out of step |
 
 ## 6. Row-level security
 

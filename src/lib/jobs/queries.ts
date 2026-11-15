@@ -7,7 +7,7 @@ export const JOB_LIST_LIMIT = 100;
 
 /** `resumes(count)` asks the database for the number of resumes per job in the same query. */
 const LIST_COLUMNS =
-  "id, title, created_at, top_talent_threshold, invite_threshold, resumes(count)";
+  "id, title, status, created_at, top_talent_threshold, invite_threshold, resumes(count)";
 
 /** A failed database call. `cause` keeps the Supabase error for the server log only. */
 export class JobsDataError extends Error {
