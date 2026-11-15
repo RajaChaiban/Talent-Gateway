@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download, LoaderCircle } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import type { NotAtsReadyResume } from "@/lib/jobs/types";
+import { resumeFileHref } from "@/lib/resumes/saved-status";
 import { formatScore } from "@/lib/score";
 import { cn } from "@/lib/utils";
 import { requestScoreAnyway, type ScoreAnywayOutcome } from "./score-anyway-client";
@@ -99,6 +100,14 @@ export function NotReadyList({ resumes }: { resumes: NotAtsReadyResume[] }) {
                   {scoring ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
                   {scoring ? "Scoring…" : "Score anyway"}
                 </Button>
+                <a
+                  href={resumeFileHref(resume.id)}
+                  aria-label={`Download ${resume.file_name}`}
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                >
+                  <Download data-icon="inline-start" aria-hidden />
+                  Download
+                </a>
                 <span role="status" className="text-copy-13 text-muted-foreground">
                   {scoring ? "Scoring this resume. This can take a few seconds." : ""}
                 </span>

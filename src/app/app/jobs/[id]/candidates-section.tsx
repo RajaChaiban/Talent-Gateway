@@ -53,6 +53,7 @@ export function CandidatesSection({
   const search = useSearchParams();
   const [tab, setTab] = useState<TabId>(() => tabSchema.parse(search.get("tab")));
   const [openId, setOpenId] = useState<string | null>(() => search.get("candidate"));
+  const [focusInviteId, setFocusInviteId] = useState<string | null>(null);
   const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ ranked: null, "not-ready": null });
 
   const shownOpenId = candidates.some((candidate) => candidate.id === openId) ? openId : null;
@@ -83,13 +84,22 @@ export function CandidatesSection({
     if (focus) tabRefs.current[next]?.focus();
   }
 
-  function toggle(id: string) {
-    const next = shownOpenId === id ? null : id;
+  function showCandidate(next: string | null) {
     setOpenId(next);
     writeSearch((params) => {
       if (next) params.set("candidate", next);
       else params.delete("candidate");
     });
+  }
+
+  function toggle(id: string) {
+    showCandidate(shownOpenId === id ? null : id);
+  }
+
+  /** The row's invite shortcut: open the candidate (if closed) and send focus to the email field. Nothing is sent. */
+  function openInvite(id: string) {
+    if (shownOpenId !== id) showCandidate(id);
+    setFocusInviteId(id);
   }
 
   function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -173,6 +183,9 @@ export function CandidatesSection({
             jobTitle={jobTitle}
             openId={shownOpenId}
             onToggle={toggle}
+            focusInviteId={focusInviteId}
+            onInvite={openInvite}
+            onInviteFocused={() => setFocusInviteId(null)}
           />
         ) : (
           <p className="text-copy-14 text-muted-foreground">No scored candidates yet.</p>

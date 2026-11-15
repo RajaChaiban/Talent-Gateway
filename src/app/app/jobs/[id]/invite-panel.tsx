@@ -35,6 +35,25 @@ export function invitePhase(
   return "ready";
 }
 
+/**
+ * The label of the shortcut on a collapsed candidate row, or null for no
+ * shortcut. It only opens the panel: the panel's own submit button stays the
+ * one click that approves sending.
+ */
+export function inviteShortcutLabel(
+  inviteStatus: RankedCandidate["invite_status"],
+): "Invite to interview" | "Try again" | null {
+  if (inviteStatus === "SENT") return null;
+  return inviteStatus === "FAILED" ? "Try again" : "Invite to interview";
+}
+
+/** Brings the email field into view and focuses it, without a jump for people who ask for less motion. */
+function revealField(field: HTMLInputElement) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  field.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+  field.focus({ preventScroll: true });
+}
+
 type ViewProps = {
   candidateId: string;
   candidateName: string;
@@ -47,6 +66,9 @@ type ViewProps = {
   error: string | null;
   onEmailChange: (value: string) => void;
   onSubmit: () => void;
+  /** Focus the email field once it is on screen, then call `onEmailFocused`. */
+  focusEmail?: boolean;
+  onEmailFocused?: () => void;
 };
 
 const STATUS_TEXT: Record<InvitePhase, string> = {
@@ -68,6 +90,8 @@ export function InvitePanelView({
   error,
   onEmailChange,
   onSubmit,
+  focusEmail = false,
+  onEmailFocused,
 }: ViewProps) {
   const fieldId = `invite-email-${candidateId}`;
   const hintId = `${fieldId}-hint`;
@@ -78,6 +102,16 @@ export function InvitePanelView({
     event.preventDefault();
     if (valid && !sending) onSubmit();
   }
+
+  // A ref callback, not an effect: it runs when the field mounts (the row was
+  // just opened) or when the request arrives for a field already on screen.
+  const focusRef = focusEmail
+    ? (field: HTMLInputElement | null) => {
+        if (!field) return;
+        revealField(field);
+        onEmailFocused?.();
+      }
+    : undefined;
 
   const message = invitationMessage(candidateName, jobTitle);
   const announcement =
@@ -112,6 +146,7 @@ export function InvitePanelView({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={fieldId}>Candidate email</Label>
             <Input
+              ref={focusRef}
               id={fieldId}
               type="email"
               name="email"
@@ -160,9 +195,13 @@ export function InvitePanelView({
 export function InvitePanel({
   candidate,
   jobTitle,
+  focusEmail = false,
+  onEmailFocused,
 }: {
   candidate: RankedCandidate;
   jobTitle: string;
+  focusEmail?: boolean;
+  onEmailFocused?: () => void;
 }) {
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
@@ -192,6 +231,8 @@ export function InvitePanel({
       error={error}
       onEmailChange={setEmail}
       onSubmit={invite}
+      focusEmail={focusEmail}
+      onEmailFocused={onEmailFocused}
     />
   );
 }

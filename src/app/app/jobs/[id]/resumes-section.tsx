@@ -9,17 +9,28 @@ import {
   type DragEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Check, CircleAlert, Clock, FileText, LoaderCircle, RotateCw, Trash2, Upload, X } from "lucide-react";
+import {
+  Check,
+  CircleAlert,
+  Clock,
+  Download,
+  FileText,
+  LoaderCircle,
+  RotateCw,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { LocalDate } from "@/components/jobs/local-date";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { RESUME_LIMITS } from "@/lib/config";
 import { deleteResume } from "@/lib/resumes/client-api";
 import { validateDrop, type RejectedFile } from "@/lib/resumes/drop";
 import { removalVerdict } from "@/lib/resumes/removal";
 import { FILE_RULE_MESSAGE } from "@/lib/resumes/messages";
 import { SAMPLE_ZIP, samplePath } from "@/lib/samples";
-import { savedResumeStatus } from "@/lib/resumes/saved-status";
+import { hasStoredFile, resumeFileHref, savedResumeStatus } from "@/lib/resumes/saved-status";
 import type { ResumeListItem } from "@/lib/resumes/types";
 import { createUploadQueue, type QueueItem } from "@/lib/resumes/upload-queue";
 import { createUploadWorker, newUploadProgress, type UploadJob } from "@/lib/resumes/upload-pipeline";
@@ -391,17 +402,29 @@ export function ResumesSection({
                 </>
               }
               actions={
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={removing.has(resume.id)}
-                  aria-label={`Remove ${resume.file_name}`}
-                  onClick={() => void removeSaved(resume)}
-                >
-                  <Trash2 data-icon="inline-start" aria-hidden />
-                  Remove
-                </Button>
+                <>
+                  {hasStoredFile(resume) ? (
+                    <a
+                      href={resumeFileHref(resume.id)}
+                      aria-label={`Download ${resume.file_name}`}
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                    >
+                      <Download data-icon="inline-start" aria-hidden />
+                      Download
+                    </a>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={removing.has(resume.id)}
+                    aria-label={`Remove ${resume.file_name}`}
+                    onClick={() => void removeSaved(resume)}
+                  >
+                    <Trash2 data-icon="inline-start" aria-hidden />
+                    Remove
+                  </Button>
+                </>
               }
             />
           ))}

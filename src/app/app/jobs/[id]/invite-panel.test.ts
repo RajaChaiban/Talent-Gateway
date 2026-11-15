@@ -5,7 +5,7 @@ import { invitationMessage } from "@/lib/invitations/message";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-const { InvitePanelView, invitePhase } = await import("./invite-panel");
+const { InvitePanelView, invitePhase, inviteShortcutLabel } = await import("./invite-panel");
 type ViewProps = Parameters<typeof InvitePanelView>[0];
 
 const NOW = new Date("2026-11-15T10:00:00.000Z");
@@ -57,6 +57,21 @@ describe("invitePhase", () => {
 
   it("is sending while this page's request is in flight", () => {
     expect(invitePhase({ invite_status: "NONE", invitation: null }, true, NOW)).toBe("sending");
+  });
+});
+
+describe("inviteShortcutLabel", () => {
+  it("offers Invite to interview on a row with no invitation, or one still being sent", () => {
+    expect(inviteShortcutLabel("NONE")).toBe("Invite to interview");
+    expect(inviteShortcutLabel("APPROVED")).toBe("Invite to interview");
+  });
+
+  it("offers Try again after a failed send", () => {
+    expect(inviteShortcutLabel("FAILED")).toBe("Try again");
+  });
+
+  it("offers no shortcut once the invitation was sent", () => {
+    expect(inviteShortcutLabel("SENT")).toBeNull();
   });
 });
 
@@ -113,5 +128,75 @@ describe("InvitePanelView", () => {
     expect(html).toContain("Thank you for applying for the Backend engineer role.");
     expect(html).not.toContain("<button");
     expect(html).not.toContain("<input");
+  });
+});
+
+type Node = { props?: { id?: string; ref?: unknown; children?: unknown } };
+
+/** The element whose `id` is the email field's, found in the view's element tree without rendering it. */
+function findField(node: unknown): Node | null {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findField(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (!node || typeof node !== "object") return null;
+  const element = node as Node;
+  if (element.props?.id === "invite-email-c1") return element;
+  return findField(element.props?.children);
+}
+
+function fieldRef(over: Partial<ViewProps>): ((field: unknown) => void) | undefined {
+  const tree = InvitePanelView({
+    candidateId: "c1",
+    candidateName: "Priya Natarajan",
+    jobTitle: "Backend engineer",
+    phase: "ready",
+    email: "priya@example.com",
+    sentTo: null,
+    sentAt: null,
+    error: null,
+    onEmailChange: () => undefined,
+    onSubmit: () => undefined,
+    ...over,
+  });
+  return findField(tree)?.props?.ref as ((field: unknown) => void) | undefined;
+}
+
+describe("InvitePanelView focus request", () => {
+  it("attaches no focus callback when nothing asked for focus", () => {
+    expect(fieldRef({})).toBeUndefined();
+  });
+
+  it("scrolls the email field into view, focuses it, and reports it, without submitting", () => {
+    vi.stubGlobal("window", { matchMedia: () => ({ matches: false }) });
+    const onEmailFocused = vi.fn();
+    const onSubmit = vi.fn();
+    const field = { scrollIntoView: vi.fn(), focus: vi.fn() };
+
+    const ref = fieldRef({ focusEmail: true, onEmailFocused, onSubmit });
+    ref?.(field);
+
+    expect(field.scrollIntoView).toHaveBeenCalledWith({ block: "center", behavior: "smooth" });
+    expect(field.focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(onEmailFocused).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("does not animate the scroll for people who ask for less motion", () => {
+    vi.stubGlobal("window", { matchMedia: () => ({ matches: true }) });
+    const field = { scrollIntoView: vi.fn(), focus: vi.fn() };
+    fieldRef({ focusEmail: true })?.(field);
+    expect(field.scrollIntoView).toHaveBeenCalledWith({ block: "center", behavior: "auto" });
+    vi.unstubAllGlobals();
+  });
+
+  it("ignores the detach call React makes with null", () => {
+    const onEmailFocused = vi.fn();
+    fieldRef({ focusEmail: true, onEmailFocused })?.(null);
+    expect(onEmailFocused).not.toHaveBeenCalled();
   });
 });

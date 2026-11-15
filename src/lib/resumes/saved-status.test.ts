@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { STORED_FAILED_MESSAGE } from "./messages";
-import { savedResumeStatus } from "./saved-status";
+import { hasStoredFile, resumeFileHref, savedResumeStatus } from "./saved-status";
 
 describe("savedResumeStatus", () => {
   it("shows an extracted resume as Ready", () => {
@@ -23,5 +23,24 @@ describe("savedResumeStatus", () => {
       tone: "warning",
       text: "Upload did not finish",
     });
+  });
+});
+
+describe("hasStoredFile", () => {
+  it("offers a download for a read or a failed read, whose file was read back from storage", () => {
+    expect(hasStoredFile({ status: "extracted" })).toBe(true);
+    expect(hasStoredFile({ status: "failed" })).toBe(true);
+  });
+
+  it("offers no download for an upload that never finished", () => {
+    expect(hasStoredFile({ status: "pending" })).toBe(false);
+  });
+});
+
+describe("resumeFileHref", () => {
+  it("points at the download route", () => {
+    expect(resumeFileHref("5c1d1f0e-0a9e-4b8e-9d0b-2f6f2f6a8b11")).toBe(
+      "/api/resumes/5c1d1f0e-0a9e-4b8e-9d0b-2f6f2f6a8b11/file",
+    );
   });
 });

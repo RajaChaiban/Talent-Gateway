@@ -150,6 +150,28 @@ export async function downloadResumeFile(
   return new Uint8Array(await data.arrayBuffer());
 }
 
+/** How long a download link stays valid: long enough for the browser to follow the redirect, no longer. */
+export const DOWNLOAD_URL_SECONDS = 60;
+
+/**
+ * A short-lived link to the stored file that the browser saves under
+ * `fileName`, or null when the object is not there.
+ */
+export async function createSignedDownload(
+  supabase: Pick<ServerClient, "storage">,
+  storagePath: string,
+  fileName: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(RESUME_BUCKET)
+    .createSignedUrl(storagePath, DOWNLOAD_URL_SECONDS, { download: fileName });
+  if (error) {
+    if (isMissingObject(error)) return null;
+    throw storageFailure("create signed download", error);
+  }
+  return data.signedUrl;
+}
+
 export type SignedUpload = { token: string; path: string };
 
 export async function createSignedUpload(

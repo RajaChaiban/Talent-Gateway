@@ -37,13 +37,18 @@ export type StorageResult = { data: unknown; error: unknown };
  * A stand-in for `supabase.storage`: `from(bucket)` returns the same bucket
  * api every time, so tests can assert on its calls.
  */
-export function storageMock(results: Partial<Record<"download" | "remove" | "createSignedUploadUrl", StorageResult>> = {}) {
+export function storageMock(results: Partial<
+    Record<"download" | "remove" | "createSignedUploadUrl" | "createSignedUrl", StorageResult>
+  > = {}) {
   const bucket = {
     download: vi.fn<(path: string) => Promise<StorageResult>>(async () => results.download ?? ok(null)),
     remove: vi.fn<(paths: string[]) => Promise<StorageResult>>(async () => results.remove ?? ok([])),
     createSignedUploadUrl: vi.fn<(path: string) => Promise<StorageResult>>(
       async () => results.createSignedUploadUrl ?? ok(null),
     ),
+    createSignedUrl: vi.fn<
+      (path: string, expiresIn: number, options?: { download?: string | boolean }) => Promise<StorageResult>
+    >(async () => results.createSignedUrl ?? ok(null)),
   };
   return { storage: { from: vi.fn(() => bucket) }, bucket };
 }
