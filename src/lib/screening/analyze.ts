@@ -8,7 +8,6 @@ import type { ServerClient } from "@/lib/auth/verified-user";
 import { getJob } from "@/lib/jobs/queries";
 import type { Job } from "@/lib/jobs/types";
 import { logServerError } from "@/lib/log";
-import { asStored } from "@/lib/score";
 import { fileFacts, nameFromFileName } from "./file-facts";
 import {
   clearAnalysisFailure,
@@ -71,7 +70,7 @@ async function scoreAndSave(
     job_id: resume.job_id,
     resume_id: resume.id,
     full_name: score.full_name.trim() || nameFromFileName(resume.file_name),
-    match_score: asStored(score.match_score),
+    match_score: score.match_score,
     match_summary: score.match_summary,
     strengths: score.strengths,
     gaps: score.gaps,
