@@ -1,3 +1,96 @@
+import type { StoredScore } from "@/lib/score";
+import { parseRadarResults } from "./radar";
+import type {
+  Candidate,
+  NotAtsReadyResume,
+  QueuedResume,
+  RankedCandidate,
+  ResumeCounts,
+  ResumeForFilter,
+} from "./types";
+
+/** Highest match first; equal scores keep the earlier-created candidate first. */
+export function sortCandidates<T extends Pick<Candidate, "match_score" | "created_at">>(
+  candidates: readonly T[],
+): T[] {
+  return candidates.toSorted(
+    (a, b) =>
+      b.match_score - a.match_score || Date.parse(a.created_at) - Date.parse(b.created_at),
+  );
+}
+
+/** Resumes the ATS check rejected, the recruiter has not overridden and that have no candidate row. */
+export function selectNotAtsReady(
+  resumes: readonly ResumeForFilter[],
+  scoredResumeIds: ReadonlySet<string>,
+): NotAtsReadyResume[] {
+  return resumes
+    .filter(
+      (resume) =>
+        resume.ats_status === "NOT_ATS_READY" &&
+        !resume.ats_override &&
+        !scoredResumeIds.has(resume.id),
+    )
+    .map(({ id, file_name, ats_score, ats_reasons, created_at }) => ({
+      id,
+      file_name,
+      ats_score,
+      ats_reasons,
+      created_at,
+    }));
+}
+
+/** True when the score is at or above the job's top-talent threshold (equal counts). */
+export function isTopTalent(score: StoredScore, threshold: StoredScore): boolean {
+  return score >= threshold;
+}
+
+/** Overridden resumes that have no candidate row yet: waiting for the scoring run. */
+export function selectQueued(
+  resumes: readonly ResumeForFilter[],
+  scoredResumeIds: ReadonlySet<string>,
+): QueuedResume[] {
+  return resumes
+    .filter((resume) => resume.ats_override && !scoredResumeIds.has(resume.id))
+    .map(({ id, file_name, created_at }) => ({ id, file_name, created_at }));
+}
+
+/** Puts every resume in exactly one bucket; the buckets add up to `resumes`. */
+export function countResumes(
+  resumes: readonly ResumeForFilter[],
+  scoredResumeIds: ReadonlySet<string>,
+): ResumeCounts {
+  const counts: ResumeCounts = {
+    resumes: resumes.length,
+    scored: 0,
+    queued: 0,
+    unchecked: 0,
+    not_ats_ready: 0,
+    awaiting_scoring: 0,
+  };
+  for (const resume of resumes) {
+    if (scoredResumeIds.has(resume.id)) counts.scored += 1;
+    else if (resume.ats_override) counts.queued += 1;
+    else if (resume.ats_status === null) counts.unchecked += 1;
+    else if (resume.ats_status === "NOT_ATS_READY") counts.not_ats_ready += 1;
+    else counts.awaiting_scoring += 1;
+  }
+  return counts;
+}
+
+/** Ranked candidates with radar parsed and the resume file name attached. */
+export function rankCandidates(
+  rows: readonly Candidate[],
+  resumes: readonly ResumeForFilter[],
+): RankedCandidate[] {
+  const fileNames = new Map(resumes.map((resume) => [resume.id, resume.file_name]));
+  return sortCandidates(rows).map(({ radar_results, ...candidate }) => ({
+    ...candidate,
+    radar_results: parseRadarResults(radar_results),
+    resume_file_name: fileNames.get(candidate.resume_id) ?? "",
+  }));
+}
+
 const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeZone: "UTC",

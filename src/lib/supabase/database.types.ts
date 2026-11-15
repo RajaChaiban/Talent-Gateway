@@ -121,6 +121,7 @@ export type Database = {
           description: string
           id: string
           invite_threshold: number
+          status: string
           title: string
           top_talent_threshold: number
         }
@@ -129,6 +130,7 @@ export type Database = {
           description: string
           id?: string
           invite_threshold?: number
+          status?: string
           title: string
           top_talent_threshold?: number
         }
@@ -137,6 +139,7 @@ export type Database = {
           description?: string
           id?: string
           invite_threshold?: number
+          status?: string
           title?: string
           top_talent_threshold?: number
         }

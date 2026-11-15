@@ -1,6 +1,7 @@
 import { BriefcaseBusiness, Plus } from "lucide-react";
 import Link from "next/link";
 import { LocalDate } from "@/components/jobs/local-date";
+import { JobStatusBadge } from "@/components/jobs/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { requireSignedInUser } from "@/lib/auth/require-signed-in-user";
 import { resumeCountLabel } from "@/lib/jobs/helpers";
@@ -53,6 +54,7 @@ export default async function JobsPage() {
               >
                 <span className="min-w-0 truncate text-label-16 font-medium">{job.title}</span>
                 <span className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-label-14 text-muted-foreground">
+                  <JobStatusBadge status={job.status} />
                   <LocalDate iso={job.created_at} />
                   <span className="tabular-nums">{resumeCountLabel(job.resume_count)}</span>
                 </span>
