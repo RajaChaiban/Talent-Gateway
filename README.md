@@ -2,10 +2,10 @@
 
 AI resume screening with a person in charge. Recruiters paste a job description and drop in a batch of resumes. A rule-based check sets aside unreadable files, an AI scores and explains the rest, and the recruiter decides who gets invited. One click sends the interview invitation by email.
 
-**Status:** the landing page is built and merged into `main`; it is not deployed yet. Sections marked "planned" or "draft" describe the design the next branches implement.
+**Status:** the landing page, sign-in and the jobs list are built. Sections marked "planned" or "draft" describe the design the next branches implement.
 
 - Repository: https://github.com/RajaChaiban/Talent-Gateway
-- Demo URL: not deployed yet
+- Demo URL: https://talent-gateway-gamma.vercel.app
 
 ## The problem
 
@@ -95,7 +95,7 @@ Status: draft.
 
 ## Known limitations
 
-- No backend exists yet; the landing page is the only built surface.
+- Uploading, scoring and the invitation are not built yet; a signed-in recruiter can only see the jobs list.
 - Sample candidates on the landing page are invented.
 - Scores are a first filter. They have not been checked against real hiring outcomes or for bias.
 - Scanned resumes are set aside, not read by OCR.
