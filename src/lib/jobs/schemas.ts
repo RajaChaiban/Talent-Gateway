@@ -38,6 +38,7 @@ export const updateThresholdsSchema = z
   );
 
 export const jobIdSchema = z.uuid({ error: "Job id is not valid" });
+export const resumeIdSchema = z.uuid({ error: "Resume id is not valid" });
 
 /** Thresholds are typed on the 0 to 10 scale and parsed to stored tenths: both types below hold stored integers. */
 export type CreateJobInput = z.output<typeof createJobSchema>;
