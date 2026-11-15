@@ -22,7 +22,6 @@ src/
   lib/
     auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
     supabase/                     the server Supabase client (`server.ts`) and the check of its two public variables (`public-env.ts`)
-    jobs/                         pure helpers for the landing page's product preview (`helpers.ts`, `radar.ts`); no data access
 ```
 
 ## 3. Auth and access
