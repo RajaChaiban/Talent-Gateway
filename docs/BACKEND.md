@@ -20,6 +20,7 @@ Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. `src
 ```
 src/
   lib/
+    supabase/                     the server Supabase client (`server.ts`) and the check of its two public variables (`public-env.ts`)
     jobs/                         pure helpers for the landing page's product preview (`helpers.ts`, `radar.ts`); no data access
 ```
 
@@ -48,10 +49,12 @@ None yet.
 
 ## 8. Environment variables
 
-None yet. The app reads no environment variable and there is no `.env.example`.
+Set in `.env.local` for local work (git-ignored) and in the Vercel project for deployments. There is no `.env.example`, because `.gitignore` excludes every `.env*` file; this table is the list.
 
 | Name | Scope | Source |
 |---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | browser and server | The Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser and server | The Supabase anon key. Public by design: row-level security decides what it can read |
 
 ## 9. Errors and limits
 
