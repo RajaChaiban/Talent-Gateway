@@ -123,6 +123,29 @@ What the tests changed: the model stopped doing arithmetic. It now judges each m
 
 What they do not prove is stated in the same document: the bands are the author's judgement, the set is a regression check and not a benchmark, and nothing here measures fairness.
 
+## Try it
+
+A reviewer can try the whole flow in a minute with the sample files. Every person, employer and school in them is invented.
+
+1. Sign in with the demo account in the submission notes.
+2. Create a job. On the new job form, open "Use a sample job description" (`/samples/sample-job-description.txt`), copy it into the description and give the job a title.
+3. On the job page, click "Download sample resumes" under the drop zone, unzip the file and drop the seven PDFs in.
+4. Click **Analyze** and open the Ranked and Not ATS-ready tabs.
+
+What to expect for each file:
+
+| File | What it shows |
+|---|---|
+| `1-strong-match.pdf` | A strong match: ready, scored high |
+| `2-good-match-other-stack.pdf` | A good match on another stack (Angular and Java): ready, scored in the middle |
+| `3-vague-claims.pdf` | The right skills with vague claims and no numbers: ready, scored lower than file 1 |
+| `4-related-role.pdf` | A QA automation engineer, a related role: ready, scored low to middle |
+| `5-unrelated-role.pdf` | A product manager: ready, scored low |
+| `6-no-email-no-phone.pdf` | The strong resume without an email address or phone number: set aside as Not ATS-ready, no model call |
+| `7-with-photo.pdf` | A European-style CV with a portrait: set aside as Not ATS-ready for the picture; "Score anyway" overrides it |
+
+The files are static and public: they live in `public/samples/` and are served at `/samples/`.
+
 ## Run it locally
 
 ```bash

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { JOB_THRESHOLD_DEFAULTS } from "@/lib/config";
+import { SAMPLE_JOB_DESCRIPTION, samplePath } from "@/lib/samples";
 import { formatScore } from "@/lib/score";
 import { DESCRIPTION_MAX } from "@/lib/jobs/schemas";
 import { createJobAction, type CreateJobState } from "./actions";
@@ -84,7 +85,15 @@ export function NewJobForm() {
           className="min-h-72"
         />
         <p id="description-hint" className="text-copy-13 text-muted-foreground">
-          Up to {DESCRIPTION_MAX.toLocaleString("en-US")} characters.
+          Up to {DESCRIPTION_MAX.toLocaleString("en-US")} characters.{" "}
+          <a
+            href={samplePath(SAMPLE_JOB_DESCRIPTION)}
+            target="_blank"
+            rel="noopener"
+            className="focus-ring rounded-sm text-link underline underline-offset-4"
+          >
+            Use a sample job description
+          </a>
         </p>
         <FieldError id="description-error" message={descriptionError} />
       </div>

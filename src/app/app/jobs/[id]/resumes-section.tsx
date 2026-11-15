@@ -18,6 +18,7 @@ import { deleteResume } from "@/lib/resumes/client-api";
 import { validateDrop, type RejectedFile } from "@/lib/resumes/drop";
 import { removalVerdict } from "@/lib/resumes/removal";
 import { FILE_RULE_MESSAGE } from "@/lib/resumes/messages";
+import { SAMPLE_ZIP, samplePath } from "@/lib/samples";
 import { savedResumeStatus } from "@/lib/resumes/saved-status";
 import type { ResumeListItem } from "@/lib/resumes/types";
 import { createUploadQueue, type QueueItem } from "@/lib/resumes/upload-queue";
@@ -315,6 +316,17 @@ export function ResumesSection({
           onChange={onPick}
         />
       </div>
+
+      <p className="text-copy-13 text-muted-foreground">
+        Need files to try it?{" "}
+        <a
+          href={samplePath(SAMPLE_ZIP)}
+          download
+          className="focus-ring rounded-sm text-link underline underline-offset-4"
+        >
+          Download sample resumes
+        </a>
+      </p>
 
       {rejected.length > 0 ? (
         <Alert variant="destructive" className="flex items-start justify-between gap-3">
