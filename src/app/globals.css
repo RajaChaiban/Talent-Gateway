@@ -1,9 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-/* @import "shadcn/tailwind.css"; */
 
 /*
- * Design tokens. The rules for using them are in docs/DESIGN.md.
+ * Design tokens. The rules for using them are in AGENTS.md ("Hard rules").
  * Raw scale values (--gray-*, --blue-*, ...) live only in this file; components
  * use the semantic names (bg-background, text-muted-foreground, border-input,
  * text-error, ...). Run `npm run design:contrast` after changing any value.
@@ -93,7 +92,7 @@
   --radius-3xl: calc(var(--radius) * 2);
   --radius-4xl: calc(var(--radius) * 2);
 
-  /* Type scale, measured from the Geist typography page (see docs/DESIGN.md). */
+  /* Type scale, measured from the Geist typography page. */
   --text-heading-32: 2rem;
   --text-heading-32--line-height: 2.5rem;
   --text-heading-32--letter-spacing: -0.04em;
@@ -353,7 +352,7 @@
   /*
    * Reduced motion: no transitions and no decorative animation (skeleton
    * pulse, enter/exit effects). The loading spinner keeps turning; it is the
-   * one exception docs/DESIGN.md allows, and its label says the same thing.
+   * one exception, and its label says the same thing.
    */
   @media (prefers-reduced-motion: reduce) {
     *,

@@ -1,5 +1,5 @@
-// Prints the WCAG 2.x contrast ratio of every color pair the design guide
-// promises (docs/DESIGN.md, "Contrast") for both themes, read straight from
+// Prints the WCAG 2.x contrast ratio of every color pair the design tokens
+// promise for both themes, read straight from
 // the tokens in src/app/globals.css. Exits 1 if any pair is below its minimum.
 //
 //   npm run design:contrast
