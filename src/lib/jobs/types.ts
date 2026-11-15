@@ -13,7 +13,7 @@ type StoredRow<Row, Key extends keyof Row> = Omit<Row, Key> & {
 
 type JobRow = Tables<"jobs">;
 
-type Job = StoredRow<JobRow, "top_talent_threshold" | "invite_threshold">;
+export type Job = StoredRow<JobRow, "top_talent_threshold" | "invite_threshold">;
 
 export type JobListItem = Omit<Job, "description"> & { resume_count: number };
 
@@ -23,6 +23,10 @@ type ListRow = Omit<JobRow, "description">;
  * The database constrains both thresholds to whole numbers from 0 to 100, so
  * the values are not rechecked here.
  */
+export function asJob(row: JobRow): Job {
+  return row as Job;
+}
+
 export function asJobListItem(row: ListRow, resumeCount: number): JobListItem {
   return { ...row, resume_count: resumeCount } as JobListItem;
 }
