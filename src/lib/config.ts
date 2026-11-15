@@ -269,6 +269,8 @@ export const INVITE_LIMITS = {
    * the cost of a recruiter waiting up to 2 minutes and clicking again.
    */
   staleApprovalMs: 2 * 60_000,
+  /** The one request to the mail provider is abandoned after this long, well inside the route's 30 s. */
+  sendTimeoutMs: 10_000,
 } as const;
 
 /** The browser's Analyze queue. */
