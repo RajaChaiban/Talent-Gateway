@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Talent Gateway
 
-## Getting Started
+AI resume screening with a person in charge. Recruiters paste a job description and drop in a batch of resumes. A rule-based check sets aside unreadable files, an AI scores and explains the rest, and the recruiter decides who gets invited. One click sends the interview invitation by email.
 
-First, run the development server:
+**Status:** the landing page is built and merged into `main`; it is not deployed yet. Sections marked "planned" or "draft" describe the design the next branches implement.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Repository: https://github.com/RajaChaiban/Talent-Gateway
+- Demo URL: not deployed yet
+
+## The problem
+
+A recruiter for a busy role gets hundreds of resumes as PDFs and Word files. Reading them all takes hours. Some files are scans or are damaged and contain no text. Scoring by eye is inconsistent from one reader to the next. And an automated tool that contacts candidates on its own is a risk nobody wants to own.
+
+Talent Gateway removes the slow, repetitive part (checking files and a first read) and keeps the decision with a person.
+
+## How it works
+
+1. **Create a job.** Title, the pasted job description and two score thresholds (top talent and invite bar).
+2. **Upload resumes.** PDF or DOCX, up to 5 MB each. Files go straight to storage.
+3. **Pre-screen.** A rule-based check reads each file's text. A scanned image, a damaged file or a resume with too few standard sections is set aside on a "Not ATS-ready" tab with the reason. No model is called for it, so no money is spent on it.
+4. **Score.** For every readable resume the AI returns a match score from 0.0 to 10.0, a short summary, strengths and gaps.
+5. **Radar.** The AI also flags four risks: copied text, employment gaps, frequent job changes and AI-written padding. Each flag carries a one-line note.
+6. **Rank.** Candidates appear best first with a green, amber or red light. The recruiter can override the check with "Score anyway" for a file that was set aside.
+7. **Decide and invite.** The recruiter reviews a candidate and clicks **Invite to interview**. That click is the approval. An email goes to the candidate, and the candidate's status changes to Invited.
+
+### Human in the loop
+
+The AI recommends and a person approves. Nothing is sent to a candidate without a recruiter's click, and every invitation records who approved it and when.
+
+| Score | Light | Meaning |
+|---|---|---|
+| 8.0 and above | Green | Top talent (default threshold, adjustable per job) |
+| 5.0 to 7.9 | Amber | Worth a look; invite bar defaults to 7.0 |
+| Below 5.0 | Red | Unlikely match |
+
+Thresholds only suggest who to look at first. They never send anything.
+
+## Architecture
+
+Status: planned. Only the landing page exists today.
+
+```mermaid
+flowchart LR
+  R[Recruiter browser] --> N[Next.js on Vercel]
+  N -->|signed upload| S[(Supabase Storage)]
+  N -->|read and write| D[(Supabase Postgres)]
+  N -->|start run| W[Workflow: analyze and invite]
+  W -->|scoring and Radar| G[AI Gateway to the model]
+  W -->|save results| D
+  W -->|invitation| E[Email provider or stand-in outbox]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Vercel building blocks (planned)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Piece | Role | Why |
+|---|---|---|
+| Next.js on Vercel | The recruiter pages and route handlers | One deployment for UI and API; the landing page stays static |
+| AI SDK | Structured model calls: score, summary, strengths, gaps, Radar | Typed output checked against a schema, with one retry when the model's output does not parse |
+| AI Gateway | Routes model calls and holds the credentials | No provider keys in the app; one place for model choice, limits and cost tracking |
+| Workflow | Runs the batch analysis and the invitation durably | Retries a failed step, survives a closed tab or a redeploy, and sends each email once |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### What stays outside Vercel
 
-## Learn More
+| Piece | Why it stays |
+|---|---|
+| Supabase (Postgres, Auth, Storage) | It is the system of record: the recruiter's jobs, resumes and candidates. In this project it stands in for the customer's existing applicant system, and Vercel connects to it rather than replacing it |
+| Email delivery | A mail provider (or, in the demo, a stand-in outbox) owns deliverability and sender reputation. Vercel does not send mail |
 
-To learn more about Next.js, take a look at the following resources:
+## Data model
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [docs/DATA_MODELING.md](docs/DATA_MODELING.md): four tables (jobs, resumes, candidates, invitations) and one private storage bucket. It is the target design; the first migration is written against it.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Backend contract
 
-## Deploy on Vercel
+See [docs/BACKEND.md](docs/BACKEND.md). It lists every route, environment variable, model call and error code, and `npm run docs:check` fails when it disagrees with the code.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Rollout plan
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Status: draft.
+
+1. **Pilot.** One recruiter, one open role, a past batch of resumes. Compare the ranking with the recruiter's own shortlist.
+2. **Shadow.** Run beside the current process for two weeks. Recruiters still read everything; the tool only scores.
+3. **Guided use.** The recruiter starts from the ranked list and sends invitations with the click.
+4. **Wider rollout.** More roles and teams, with the thresholds tuned per role.
+
+## Success measures
+
+Status: draft.
+
+- Time from the last resume received to a shortlist.
+- Agreement between the AI's top candidates and the recruiter's final shortlist.
+- Share of AI suggestions a recruiter overrides, and which way.
+- Share of unreadable files caught before a recruiter opens them.
+- Cost per resume scored.
+
+## Known limitations
+
+- No backend exists yet; the landing page is the only built surface.
+- Sample candidates on the landing page are invented.
+- Scores are a first filter. They have not been checked against real hiring outcomes or for bias.
+- Scanned resumes are set aside, not read by OCR.
+- The invitation email is a stand-in until a sending domain is set up.
+- Single demo tenant: every signed-in user sees every job.
+
+## Development tooling
+
+- **Quality gate.** `npm run lint`, `npm run docs:check`, `npm run typecheck`, `npm run test`, `npm run design:contrast` and `npm run build`. CI runs the same commands in the same order on every pull request.
+- **Docs as a verifier.** `docs/BACKEND.md` must name every route, environment variable, model and error code, and CI fails when it does not.
+- **Contrast check.** Every color pair in the design tokens must meet WCAG AA in both themes.
+- **Agent instructions.** `AGENTS.md` holds the working rules, review loops and delivery workflow used on this repository.
+- **Delivery.** One feature per branch and one pull request per feature, merged with a merge commit so the full history stays.
+
+### How AI behaviour will be validated
+
+Status: planned.
+
+- Model output must match a schema; output that does not parse is retried once and then fails the resume instead of being guessed.
+- Unit tests run against a stand-in model, so the pipeline and the "no model call for a set-aside resume" rule are proven without network access.
+- A fixed set of sample resumes with expected ranges is scored against the real model before each release.
+- A recruiter's override and approval rates are logged, so drift shows up in use.
+
+## Run it locally
+
+```bash
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. The landing page needs no environment variables. Backend variables will be listed in `docs/BACKEND.md` when they exist.

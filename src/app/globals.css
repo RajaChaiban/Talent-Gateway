@@ -313,7 +313,7 @@
   }
 }
 
-/* Traffic-light statuses (score dots, verdicts). Same steps in both themes. */
+/* Traffic-light statuses (score dots, status badges). Same steps in both themes. */
 :root {
   --status-green: var(--success);
   --status-green-subtle: var(--success-subtle);
