@@ -1,0 +1,29 @@
+Priya Nandakumar
+Product Manager
+priya.nandakumar@example.com
+(415) 555-0103
+San Francisco, CA
+
+SUMMARY
+Product manager with 6 years leading discovery, roadmaps and launches for business software, working with design and engineering teams.
+
+EXPERIENCE
+Senior Product Manager, Tidewater Analytics, San Francisco, CA
+2021 - Present
+- Owned the roadmap for the reporting product, used by 5,000 business customers.
+- Ran 60 customer interviews a year and turned the findings into quarterly priorities.
+- Launched scheduled reports, which raised weekly active use by 18%.
+- Wrote product requirement documents and user stories for two engineering teams.
+- Set the product's success metrics and reviewed them with leadership each month.
+
+Product Manager, Saltmarsh Software, Oakland, CA
+2018 - 2021
+- Managed the onboarding flow and cut time to first value from 9 days to 4.
+- Ran pricing research with the marketing team and introduced a new mid-tier plan.
+- Coordinated launches with sales, support and marketing.
+
+SKILLS
+Product discovery, roadmapping, user research, requirements writing, A/B testing, stakeholder management, Jira, Figma, SQL for basic reporting
+
+EDUCATION
+B.A. Economics, Redwood Coast University, 2018

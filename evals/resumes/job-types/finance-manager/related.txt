@@ -1,0 +1,28 @@
+Aisha Okonkwo
+Staff Accountant
+aisha.okonkwo@example.com
+(404) 555-0124
+Atlanta, GA
+
+SUMMARY
+Staff accountant with 4 years in general ledger accounting and the monthly close at a building supplies distributor.
+
+EXPERIENCE
+Staff Accountant, Peachtree Building Supply, Atlanta, GA
+2022 - Present
+- Prepare 40 journal entries and 18 balance sheet reconciliations each month as part of a 6-day close.
+- Prepare the first draft of the monthly profit and loss and balance sheet for the controller's review.
+- Built an Excel workbook that matches bank lines to ledger entries, cutting reconciliation time from 2 days to half a day.
+- Post accruals and prepaid amortisation in NetSuite and keep the fixed asset register.
+- Pull the supporting schedules for the annual audit; the auditors raised no findings on my accounts in 2024.
+
+Accounts Payable Specialist, Riverside Medical Group, Decatur, GA
+2020 - 2022
+- Processed about 1,200 supplier invoices a month and ran the weekly payment run.
+- Cleared 300 aged items from the payables ledger in the first six months.
+
+SKILLS
+General ledger, journal entries, account reconciliations, monthly close, accruals, Excel (pivot tables, lookups), NetSuite
+
+EDUCATION
+B.S. Accounting, Chattahoochee State University, 2020

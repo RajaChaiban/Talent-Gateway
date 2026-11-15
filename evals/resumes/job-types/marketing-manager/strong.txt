@@ -1,0 +1,30 @@
+Nadia Fontaine
+Digital Marketing Manager
+nadia.fontaine@example.com
+(303) 555-0141
+Denver, CO
+
+SUMMARY
+Digital marketing manager with 7 years running paid, email and search marketing for online retailers, managing a team of three.
+
+EXPERIENCE
+Digital Marketing Manager, Summit Trail Supply, Denver, CO
+2021 - Present
+- Manage a team of three specialists and an outside creative agency.
+- Own a $120,000 monthly paid media budget across Google Ads and Meta Ads; raised return on ad spend from 3.1 to 4.6 in two years.
+- Rebuilt the Google Shopping campaigns around product margin, cutting cost per acquisition by 28%.
+- Built 9 automated email flows in Klaviyo (welcome, abandoned cart, post-purchase, win-back) that now bring in 22% of online revenue; every subject line and offer is A/B tested.
+- Led an SEO programme of keyword research and on-page changes to 300 category pages, growing organic traffic by 64% in a year.
+- Built a Google Analytics 4 and Looker Studio dashboard that ties each channel's spend to revenue, reviewed weekly with the Head of Growth.
+
+Digital Marketing Specialist, Alpenglow Apparel, Boulder, CO
+2018 - 2021
+- Ran paid social campaigns on Meta with a $30,000 monthly budget for a Shopify store.
+- Set up customer segments in HubSpot and grew the email list from 40,000 to 115,000.
+- Ran landing page tests that lifted conversion from 2.1% to 2.9%.
+
+SKILLS
+Google Ads, Meta Ads, Klaviyo, HubSpot, SEO, Google Analytics 4, Looker Studio, Shopify, A/B testing, budget management
+
+EDUCATION
+B.A. Marketing, Front Range State College, 2018

@@ -1,0 +1,31 @@
+Elena Marchetti, CPA
+Finance Manager
+elena.marchetti@example.com
+(617) 555-0104
+Boston, MA
+
+SUMMARY
+Finance manager with 9 years in financial planning and analysis and accounting at distribution and retail companies, leading a team of four analysts.
+
+EXPERIENCE
+Finance Manager, Bayline Supply Group, Boston, MA
+2020 - Present
+- Lead a team of four analysts and own the annual budget of $180 million in revenue and the quarterly forecast.
+- Run the monthly close with the accounting team and present the profit and loss, balance sheet and cash flow to the leadership team within 6 working days.
+- Built a driver-based forecast model in Excel tied to NetSuite, which cut the forecast cycle from 3 weeks to 1.
+- Explain monthly variances to department heads in plain language; introduced a one-page variance summary that managers now use in their own reviews.
+- Built a pricing analysis that supported a 3% price change, adding $2.4 million in gross margin.
+- Automated the weekly sales report with Power BI, saving the team 6 hours a week.
+
+Senior Financial Analyst, Northgate Retail, Providence, RI
+2016 - 2020
+- Prepared the monthly management reports and the variance analysis for 40 stores.
+- Built the store labour model used to plan staffing in the budget.
+- Supported the move from a legacy ledger to SAP.
+
+SKILLS
+Budgeting, forecasting, financial modelling, variance analysis, monthly close, advanced Excel, NetSuite, SAP, Power BI, team leadership
+
+EDUCATION
+B.S. Accounting, Commonwealth Bay University, 2016
+CPA, Massachusetts, 2018

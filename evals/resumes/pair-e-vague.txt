@@ -1,0 +1,28 @@
+James Whitfield
+Software Engineer
+james.whitfield@example.com
+(720) 555-0110
+Denver, CO
+
+SUMMARY
+Software engineer with 4 years building web applications.
+
+EXPERIENCE
+Software Engineer, Ridgeway Health Software, Denver, CO
+2022 - Present
+- Leveraged cutting-edge technologies to deliver innovative front-end solutions.
+- Worked on back-end features and helped with testing.
+- Improved database performance.
+- Used AI to improve productivity.
+- Helped with CI/CD.
+
+Junior Developer, Pinecrest Digital Agency, Boulder, CO
+2021 - 2022
+- Built marketing websites and small React components for client projects.
+- Fixed bugs reported by clients and wrote release notes.
+
+SKILLS
+TypeScript, JavaScript, React, Node.js, PostgreSQL, SQL, Jest, GitHub Actions, Git
+
+EDUCATION
+B.S. Computer Science, Front Range University, 2021

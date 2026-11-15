@@ -1,0 +1,28 @@
+Daniel Reyes
+Software Engineer
+daniel.reyes@example.com
+(512) 555-0121
+Austin, TX
+
+SUMMARY
+Front-end software engineer with 5 years building customer-facing web applications in TypeScript and React.
+
+EXPERIENCE
+Software Engineer, Cobaltline Insurance, Austin, TX
+2022 - Present
+- Built the policy quote flow in React and TypeScript, used by 12,000 customers a month; cut drop-off on the quote form from 41% to 27%.
+- Moved the customer portal from JavaScript to TypeScript over six months, removing a class of runtime errors that caused 30 support tickets a month.
+- Built a shared React component library of 45 components used by three product teams.
+- Worked with designers to bring the portal to WCAG 2.1 AA, fixing 120 accessibility issues.
+
+Front-End Developer, Mesa Verde Media, San Antonio, TX
+2020 - 2022
+- Built interactive article pages in React for a news site with 2 million monthly readers.
+- Cut the largest page's bundle size by 35% by splitting code and lazy-loading images.
+- Rebuilt the newsletter sign-up form, raising sign-ups from 900 to 2,300 a week.
+
+SKILLS
+TypeScript, JavaScript, React, Redux, HTML, CSS, Figma, Git, web accessibility
+
+EDUCATION
+B.S. Software Engineering, Hill Country Polytechnic, 2020

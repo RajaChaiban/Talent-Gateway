@@ -1,0 +1,28 @@
+Grace Lindqvist
+QA Automation Engineer
+grace.lindqvist@example.com
+(503) 555-0122
+Portland, OR
+
+SUMMARY
+QA automation engineer with 5 years writing automated test suites and keeping CI pipelines reliable for web applications.
+
+EXPERIENCE
+QA Automation Engineer, Tillamook Data Systems, Portland, OR
+2021 - Present
+- Built the end-to-end test suite for the customer web app in Playwright and TypeScript: 640 tests that run on every pull request in 9 minutes.
+- Wrote API integration tests against the Node.js services, catching 35 regressions before release in 2024.
+- Added the test stage to the GitHub Actions pipeline and cut flaky test failures from 12% of runs to under 2%.
+- Wrote SQL checks against the PostgreSQL test database to verify the data after each nightly import.
+- Worked with developers to add unit tests to new features, and review test coverage in pull requests.
+
+QA Analyst, Juniper Ridge Software, Salem, OR
+2019 - 2021
+- Wrote and ran manual test plans for a scheduling web app with 4,000 business users.
+- Automated the 80 most-used regression checks with Selenium, saving 2 days of manual testing per release.
+
+SKILLS
+Playwright, Selenium, TypeScript, JavaScript, API testing, SQL, PostgreSQL, GitHub Actions, Jira, test planning
+
+EDUCATION
+B.S. Information Systems, Willamette Valley College, 2019

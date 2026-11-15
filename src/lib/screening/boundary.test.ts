@@ -10,6 +10,11 @@ import { describe, expect, it } from "vitest";
  * modules. Imports are found in every form: `from`, side-effect `import`,
  * `import()` (quoted or template literal), `require()`, with or without a
  * `.js` / `.ts` suffix.
+ *
+ * The one deliberate exception is the model evaluation (`npm run eval`,
+ * outside `src/`): `evals/model-call.ts` calls `scoreResume` directly, after
+ * the runner has run the ATS check on every local file itself. It is the only
+ * file under `evals/` that may reach the AI layer, and only these modules.
  */
 
 const SRC = join(__dirname, "..", "..");
@@ -30,6 +35,16 @@ const all = sourceFiles(SRC).map((path) => ({
   text: readFileSync(path, "utf8"),
 }));
 const code = all.filter(({ file }) => !/\.test\.tsx?$/.test(file));
+
+const EVALS = join(SRC, "..", "evals");
+const evalCode = sourceFiles(EVALS)
+  .map((path) => ({
+    file: `evals/${relative(EVALS, path).split(sep).join("/")}`,
+    text: readFileSync(path, "utf8"),
+  }))
+  .filter(({ file }) => !/\.test\.tsx?$/.test(file));
+const EVAL_MODEL_CALL = "evals/model-call.ts";
+const EVAL_AI_IMPORTS = ["@/lib/ai/errors", "@/lib/ai/model", "@/lib/ai/prompts", "@/lib/ai/score-resume"];
 
 const SPECIFIER = [
   /\bfrom\s*["'`]([^"'`]+)["'`]/g,
@@ -55,8 +70,8 @@ function importersOf(module: RegExp): string[] {
 const GENERATION = ["generateText", "generateObject", "streamText", "streamObject"];
 
 /** Files that take a generation function from the "ai" package (named, namespace or dynamic import). */
-function generationCallers(): string[] {
-  return code
+function generationCallers(files: ReadonlyArray<{ file: string; text: string }> = code): string[] {
+  return files
     .filter(({ text }) => {
       const named = [...text.matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*["']ai["']/g)].some(
         (match) => match[1].split(",").some((name) => GENERATION.includes(name.trim().split(/\s+as\s+/)[0])),
@@ -117,6 +132,17 @@ describe("screening boundary", () => {
     const users = code.filter(({ text }) => specifiers(text).includes("ai/test"));
     expect(users.map(({ file }) => file)).toEqual(["lib/ai/fake-model.ts"]);
     expect(users[0].text).not.toMatch(/\bfrom\s*["']ai\/test["']/);
+  });
+
+  it("in evals/, only model-call.ts reaches the AI layer, for the scoring call only, with no generation function", () => {
+    expect(evalCode.length).toBeGreaterThan(5);
+    const aiLayer = (specifier: string) => /(^|\/)lib\/ai\//.test(specifier);
+    const importers = evalCode.filter(({ text }) => specifiers(text).some(aiLayer)).map(({ file }) => file);
+    expect(importers).toEqual([EVAL_MODEL_CALL]);
+    const modelCall = evalCode.find(({ file }) => file === EVAL_MODEL_CALL);
+    expect(specifiers(modelCall?.text ?? "").filter(aiLayer).toSorted()).toEqual(EVAL_AI_IMPORTS);
+    expect(generationCallers(evalCode)).toEqual([]);
+    expect(evalCode.filter(({ text }) => specifiers(text).includes("ai/test")).map(({ file }) => file)).toEqual([]);
   });
 
   it("nothing under src/app imports from the AI layer", () => {

@@ -1,0 +1,25 @@
+Applied AI Engineer
+Northwind Labs (a technology company building a web platform for small businesses)
+
+About the role
+You will build the AI features inside our product: agents and assistants that read documents, call tools and take work off our customers' hands. You will work directly with customers and internal teams to turn a business process into a working, measured AI workflow, and you will own it from the first prototype to production.
+
+Must have
+- 3 or more years building software in production, with at least 1 year building applications on large language models.
+- LLM application work: prompt and tool design, structured output, agents or multi-step workflows.
+- Evaluation of model behaviour: test sets, evals or regression checks you built and used.
+- Python or TypeScript, written daily, with a web framework for APIs.
+- A relational database (PostgreSQL or similar) and experience turning unstructured data into structured data.
+- Cloud infrastructure experience.
+- A bachelor's degree in computer science, information systems or a related field.
+
+Nice to have
+- A master's degree in a related field.
+- Retrieval-augmented generation, fine-tuning or self-hosted models.
+- Customer-facing delivery: gathering requirements and handing over a finished workflow.
+- Public work samples, such as a code repository.
+
+What you will do
+- Design and ship LLM agents and document workflows for real business processes.
+- Build the evaluations that show a workflow is correct before and after each change.
+- Work with customers to scope, deliver and measure each workflow.

@@ -1,0 +1,32 @@
+James Whitfield
+Software Engineer
+james.whitfield@example.com
+(720) 555-0110
+Denver, CO
+
+SUMMARY
+Software engineer with 4 years building web applications.
+
+EXPERIENCE
+Software Engineer, Ridgeway Health Software, Denver, CO
+2022 - Present
+- Built patient scheduling screens in React and TypeScript used by 200 clinics, replacing a paper booking form.
+- Wrote Node.js API endpoints for appointments and reminders, with unit tests in Jest.
+- Added indexes and rewrote two PostgreSQL queries behind the clinic calendar, taking its load time from 3 s to 600 ms.
+- Built an agent loop with Claude Code that runs the test suite and opens a fix for each failure, cutting test triage time by 40%.
+- Added a test step to the team's GitHub Actions pipeline so a pull request cannot merge with failing tests.
+
+Junior Developer, Pinecrest Digital Agency, Boulder, CO
+2021 - 2022
+- Built marketing websites and small React components for client projects.
+- Fixed bugs reported by clients and wrote release notes.
+
+PROJECTS
+- Trailhead Planner (2024): a web app for planning group hikes, built on weekends; 120 people use it each week.
+- Migration linter (2023): a command-line tool that checks database migration files for operations that lock large tables before they run.
+
+SKILLS
+TypeScript, JavaScript, React, Node.js, PostgreSQL, SQL, Jest, GitHub Actions, Git
+
+EDUCATION
+B.S. Computer Science, Front Range University, 2021
