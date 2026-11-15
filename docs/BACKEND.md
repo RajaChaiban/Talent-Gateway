@@ -15,24 +15,42 @@ None yet. The landing page (`/`) is prerendered at build time and reads no reque
 
 ## 2. Project layout
 
-Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. `src/app/api` does not exist yet.
+Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. `src/app/api` does not exist yet. The request proxy is `src/proxy.ts`.
 
 ```
 src/
   lib/
+    auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
+    supabase/                     the server Supabase client (`server.ts`) and the check of its two public variables (`public-env.ts`)
     jobs/                         pure helpers for the landing page's product preview (`helpers.ts`, `radar.ts`); no data access
 ```
 
 ## 3. Auth and access
 
-None yet. Every page is public.
+Supabase Auth, email and password. Sign-ups are disabled on the Supabase project, so only the demo user can sign in. The session lives in cookies set by the server client.
+
+- `/login` is the only page that signs people in. `/` is public. Everything under `/app` needs a signed-in user.
+- Two checks protect `/app`. The proxy (`src/proxy.ts`, on `/app/**` and `/login`) refreshes the session and redirects page navigations: signed out on `/app` goes to `/login?next=...`, signed in on `/login` goes on to `next`. Then every `/app` page calls `requireSignedInUser()` itself, because the proxy is only a first check and a layout does not gate its pages.
+- When Supabase rejects a session that the cookie still claims, the page redirects to `/auth/signed-out`, which clears the cookies so the proxy cannot bounce the browser back. When Supabase Auth cannot answer at all, the page shows a retryable error instead of signing the user out.
+- Sign-out ends only this browser's session (`scope: "local"`), because the demo login is shared.
+- Who is signed in is always asked from Supabase (`auth.getUser()`), never read from the unverified cookie.
+- After sign-in the browser goes to the `next` path, which is accepted only when it is a path on this site; anything else becomes `/app`.
+- A failed sign-in says "Email or password is incorrect", never which of the two was wrong.
 
 ## 4. API contract
 
-No route handlers and no server actions yet. Add one row per method and path when the first route is merged.
+One row per method and path.
 
 | Method | Path | Auth | Input | Does | Returns |
 |---|---|---|---|---|---|
+| GET | `/auth/signed-out` | Public | Query `next` (optional) | Clears the Supabase session cookies with no network call. `maxDuration` 5 | 303 redirect to `/login?next=...` |
+
+### Server actions
+
+| Action | File | Auth | Input | Does | Returns |
+|---|---|---|---|---|---|
+| `signIn` | `src/app/login/actions.ts` | Public | Form fields `email`, `password`, `next` | Checks the input, signs in with Supabase Auth, then redirects to `next` | Field errors or one form error; redirects on success |
+| `signOut` | `src/app/app/actions.ts` | Session | None | Ends this browser's session | Redirects to `/` |
 
 ## 5. Model calls
 
@@ -48,10 +66,12 @@ None yet.
 
 ## 8. Environment variables
 
-None yet. The app reads no environment variable and there is no `.env.example`.
+Set in `.env.local` for local work (git-ignored) and in the Vercel project for deployments. There is no `.env.example`, because `.gitignore` excludes every `.env*` file; this table is the list.
 
 | Name | Scope | Source |
 |---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | browser and server | The Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser and server | The Supabase anon key. Public by design: row-level security decides what it can read |
 
 ## 9. Errors and limits
 
