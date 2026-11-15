@@ -51,6 +51,7 @@ src/
       jobs/                       `[id]/route.ts`: PATCH a job's thresholds
       resumes/                    `sign/route.ts`: POST to reserve a row and get a signed upload token; `[id]/complete/route.ts`: POST to read the uploaded file's text; `[id]/route.ts`: DELETE a resume and its file
   lib/
+    ats/                          the rule-based pre-screen: `checkAts` (`check-ats.ts`) and its text scan, heading finder, email finder, reasons and config check; `to-columns.ts` turns a result into `resumes` columns
     auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`), the route-handler guard (`require-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
     jobs/                         job queries that take the caller's client (`queries.ts`), input schemas (`schemas.ts`), row types with scores marked as stored tenths (`types.ts`), the API body on the 0 to 10 scale (`serialize.ts`), route-handler responses (`api.ts`), the threshold editor's save sequencer and commit scheduler, and date and count labels (`helpers.ts`)
     resumes/                      resume upload: queries and storage calls that take the caller's client (`queries.ts`), the sign body schema (`schemas.ts`), file names, types and storage paths (`files.ts`, `bucket.ts`), the real-type check (`sniff.ts`), text extraction (`extract-text.ts`, `zip-inflate.ts`), the complete step (`complete.ts`), route-handler responses (`api.ts`), messages and row types, and the browser side: the drop check (`drop.ts`), the upload queue and its worker (`upload-queue.ts`, `upload-pipeline.ts`), the fetch and storage helpers (`client-api.ts`), the remove verdict (`removal.ts`) and the stored status label (`saved-status.ts`)
@@ -100,7 +101,19 @@ None yet.
 
 ## 7. Screening pipeline
 
-None yet.
+Only the first stage exists: the pre-screen. Nothing calls it yet; the analyze route that runs it, and the model scoring after it, are not merged.
+
+**Pre-screen (`checkAts`, `src/lib/ats/check-ats.ts`).** A pure function over a resume's extracted text and its file facts. It calls no model and no network, so a resume it sets aside costs nothing. Every threshold and weight comes from `ATS_CONFIG` in `src/lib/config.ts`, which is validated before use (an invalid config throws an error naming the field).
+
+| Check | Passes when |
+|---|---|
+| `readable_text` | The text has at least the configured number of readable characters (a scan or a broken file fails here) |
+| `contact_info` | An email address is found |
+| `standard_sections` | Enough of the standard section headings appear |
+| `layout_noise` | The share of stray symbols in the text is under the limit |
+| `file` | The file is a supported type and an acceptable size |
+
+Every check always runs. The result is `ATS_READY` only when every required check passes and the weighted score reaches the pass score (6.0); otherwise it is `NOT_ATS_READY` with one plain-language reason per failed check. The score is stored in tenths like every other score.
 
 ## 8. Environment variables
 

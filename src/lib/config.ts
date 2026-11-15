@@ -52,6 +52,157 @@ export const JOB_THRESHOLD_DEFAULTS = {
   invite: asStored(70),
 } as const;
 
+export type AtsCheckId =
+  | "readable_text"
+  | "contact_info"
+  | "standard_sections"
+  | "layout_noise"
+  | "file";
+
+export interface AtsConfig {
+  /** Fewer characters than this after collapsing whitespace fails readable_text. */
+  readonly minTextChars: number;
+  /** Section names that count towards standard_sections; each needs an entry in sectionHeadings. */
+  readonly requiredSections: readonly string[];
+  /** Fewer distinct required sections than this fails standard_sections. */
+  readonly minSections: number;
+  /**
+   * Heading variants per section: lower case, letters and spaces only, "and" for "&",
+   * accents written as precomposed letters. A heading joining two known variants with
+   * "&", "/", "and", "et", "y" or "und" counts for both sections.
+   */
+  readonly sectionHeadings: Readonly<Record<string, readonly string[]>>;
+  /** A heading line is at most this many characters, decoration included. */
+  readonly maxHeadingChars: number;
+  /** A larger share of visible characters that are structural noise rather than text fails layout_noise. */
+  readonly maxSymbolRatio: number;
+  /** Accepted content types, lower case. */
+  readonly allowedContentTypes: readonly string[];
+  /** Recruiter-facing name of each accepted content type, used in reasons. */
+  readonly contentTypeLabels: Readonly<Record<string, string>>;
+  /** A larger file fails the file check. */
+  readonly maxFileBytes: number;
+  /** Points each passed check adds to the score; the weights are not negative and sum to 100. */
+  readonly weights: Readonly<Record<AtsCheckId, number>>;
+  /** Checks that must pass for ATS_READY whatever the score. */
+  readonly required: Readonly<Record<AtsCheckId, boolean>>;
+  /** Minimum score for ATS_READY, from 0 to 100. */
+  readonly passScore: number;
+}
+
+function deepFreeze<T extends object>(value: T): T {
+  for (const child of Object.values(value)) {
+    if (typeof child === "object" && child !== null) deepFreeze(child);
+  }
+  return Object.freeze(value);
+}
+
+export const ATS_CONFIG: AtsConfig = deepFreeze({
+  minTextChars: 300,
+  requiredSections: ["experience", "education", "skills"],
+  minSections: 2,
+  sectionHeadings: {
+    experience: [
+      "experience",
+      "work experience",
+      "professional experience",
+      "relevant experience",
+      "employment",
+      "employment history",
+      "work history",
+      "career history",
+      "professional background",
+      "professional history",
+      "expérience",
+      "expérience professionnelle",
+      "experience professionnelle",
+      "expériences professionnelles",
+      "parcours professionnel",
+      "experiencia",
+      "experiencia profesional",
+      "experiencia laboral",
+      "berufserfahrung",
+      "berufliche erfahrung",
+      "arbeitserfahrung",
+      "beruflicher werdegang",
+    ],
+    education: [
+      "education",
+      "academic background",
+      "academic qualifications",
+      "education and training",
+      "education and qualifications",
+      "educational background",
+      "qualifications",
+      "formation",
+      "formations",
+      "éducation",
+      "formation et diplômes",
+      "études",
+      "educación",
+      "educacion",
+      "formación",
+      "formacion",
+      "formación académica",
+      "estudios",
+      "ausbildung",
+      "bildung",
+      "bildungsweg",
+      "akademische ausbildung",
+    ],
+    skills: [
+      "skills",
+      "technical skills",
+      "key skills",
+      "core skills",
+      "core competencies",
+      "skills and expertise",
+      "skills and tools",
+      "professional skills",
+      "competencies",
+      "compétences",
+      "competences",
+      "compétences clés",
+      "compétences techniques",
+      "habilidades",
+      "competencias",
+      "habilidades técnicas",
+      "habilidades y competencias",
+      "conocimientos",
+      "kenntnisse",
+      "fähigkeiten",
+      "fahigkeiten",
+      "kenntnisse und fähigkeiten",
+      "fachkenntnisse",
+      "edv kenntnisse",
+    ],
+  },
+  maxHeadingChars: 50,
+  maxSymbolRatio: 0.15,
+  allowedContentTypes: [...UPLOAD_LIMITS.allowedMimeTypes],
+  contentTypeLabels: {
+    "application/pdf": "PDF",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Word (DOCX)",
+  },
+  maxFileBytes: UPLOAD_LIMITS.maxBytes,
+  weights: {
+    readable_text: 22,
+    file: 15,
+    contact_info: 21,
+    standard_sections: 21,
+    layout_noise: 21,
+  },
+  required: {
+    readable_text: true,
+    file: true,
+    contact_info: false,
+    standard_sections: false,
+    layout_noise: false,
+  },
+  /** Stored tenths: 6.0 on the 0 to 10 scale. Ready needs this and every required check passing. */
+  passScore: 60,
+});
+
 export type TrafficLight = "green" | "amber" | "red";
 
 export function trafficLight(score: StoredScore): TrafficLight {
