@@ -51,6 +51,7 @@ src/
       jobs/                       `[id]/route.ts`: PATCH a job's thresholds
       resumes/                    `sign/route.ts`: POST to reserve a row and get a signed upload token; `[id]/complete/route.ts`: POST to read the uploaded file's text; `[id]/route.ts`: DELETE a resume and its file
   lib/
+    ai/                           the model calls: `scoreResume` and `runRadar`, their prompts and output schemas, the shared structured-output call (`generate.ts`), the model resolver and test stand-in (`model.ts`, `fake-model.ts`) and the rate-limit error (`errors.ts`)
     ats/                          the rule-based pre-screen: `checkAts` (`check-ats.ts`) and its text scan, heading finder, email finder, reasons and config check; `to-columns.ts` turns a result into `resumes` columns
     auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`), the route-handler guard (`require-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
     jobs/                         job queries that take the caller's client (`queries.ts`), input schemas (`schemas.ts`), row types with scores marked as stored tenths (`types.ts`), the API body on the 0 to 10 scale (`serialize.ts`), route-handler responses (`api.ts`), the threshold editor's save sequencer and commit scheduler, and date and count labels (`helpers.ts`)
@@ -93,7 +94,19 @@ One row per method and path.
 
 ## 5. Model calls
 
-None yet. When the first model call is added, its slug goes in an `AI_MODELS` object in `src/lib/config.ts`, and each key (`AI_MODELS.<key>`) and its model string is named here.
+Two calls, both through the AI SDK to Vercel AI Gateway. Nothing calls them yet; the analyze route that does is not merged.
+
+| Key | Model | Function | Returns |
+|---|---|---|---|
+| `AI_MODELS.scoring` | `anthropic/claude-haiku-5.5` | `scoreResume` (`src/lib/ai/score-resume.ts`) | Candidate name, match score, summary, strengths, gaps |
+| `AI_MODELS.radar` | `anthropic/claude-haiku-5.5` | `runRadar` (`src/lib/ai/run-radar.ts`) | Four risk flags, each with a one-line note: copied text, employment gaps, job hopping, AI-written padding |
+
+- **Gateway and credentials.** A model is a plain `provider/model` string from `AI_MODELS` in `src/lib/config.ts`, which the AI SDK sends to AI Gateway. The gateway is authenticated by the project's OIDC token (`VERCEL_OIDC_TOKEN`, supplied by Vercel at run time and by `vercel env pull` locally), so the app holds no provider key. Changing a model or a provider is a one-line config change.
+- **Structured output.** Both calls go through `generateStructured` (`src/lib/ai/generate.ts`): `generateText` with `Output.object({ schema })`, so the answer is parsed against a Zod schema (`src/lib/ai/schemas.ts`) and never read as free text. An answer that does not parse is retried once; a second failure fails that resume instead of guessing.
+- **Limits (`SCREENING_AI_LIMITS`).** One call, with its parse retry and the SDK's one transport retry, shares a single 25 second abort budget. The job description is cut at 8,000 characters and the resume at 12,000 before sending, and Radar compares at most 8 other resumes as 600-character excerpts, so the cost of a call is bounded whatever was uploaded.
+- **Rate limits.** A 429 from the gateway becomes `ModelBusyError` with the seconds to wait. It is retryable: the resume is not marked failed.
+- **Prompts.** The resume and the job description are sent as clearly delimited sections and the instructions tell the model to treat them as data, so text inside a resume cannot act as an instruction. Radar excerpts leave out the header lines of other resumes, so one candidate's contact details are not sent with another's.
+- **Tests never call a model.** Unit tests use the AI SDK's mock model. For browser tests, `E2E_FAKE_MODEL=1` makes `resolveModel` return a local stand-in, and it is refused on any Vercel deployment (`standInAllowed`), so production can only ever use the real gateway model.
 
 ## 6. Workflows
 
@@ -101,7 +114,7 @@ None yet.
 
 ## 7. Screening pipeline
 
-Only the first stage exists: the pre-screen. Nothing calls it yet; the analyze route that runs it, and the model scoring after it, are not merged.
+Two stages exist as libraries: the pre-screen below and the model calls in section 5. Nothing calls them yet; the analyze route that runs the pre-screen and then the model is not merged.
 
 **Pre-screen (`checkAts`, `src/lib/ats/check-ats.ts`).** A pure function over a resume's extracted text and its file facts. It calls no model and no network, so a resume it sets aside costs nothing. Every threshold and weight comes from `ATS_CONFIG` in `src/lib/config.ts`, which is validated before use (an invalid config throws an error naming the field).
 
@@ -123,6 +136,8 @@ Set in `.env.local` for local work (git-ignored) and in the Vercel project for d
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | browser and server | The Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser and server | The Supabase anon key. Public by design: row-level security decides what it can read |
+| `VERCEL_OIDC_TOKEN` | server | Issued by Vercel. Authenticates model calls to AI Gateway. Set automatically on deployments; `vercel env pull` writes a short-lived copy to `.env.local` |
+| `E2E_FAKE_MODEL` | tests | `1` swaps the model for a local stand-in in browser tests. Ignored on every Vercel deployment |
 
 ## 9. Errors and limits
 

@@ -210,3 +210,49 @@ export function trafficLight(score: StoredScore): TrafficLight {
   if (score >= SCORE_BANDS.trafficLight.amber) return "amber";
   return "red";
 }
+
+/**
+ * Vercel AI Gateway model slugs ("provider/model"). Authenticated by the
+ * project OIDC token (VERCEL_OIDC_TOKEN); the app holds no provider keys.
+ *
+ * DECISION: the slug is plain config, not code. Swapping a model or a provider
+ * is a one-line change here, and every call goes through the gateway, so
+ * spend and failures are visible in one place.
+ */
+export const AI_MODELS = {
+  /** scoreResume: match score, summary, strengths, gaps. */
+  scoring: "anthropic/claude-haiku-5.5",
+  /** runRadar: copycat, employment gaps, job hopping, AI-written. */
+  radar: "anthropic/claude-haiku-5.5",
+} as const;
+
+/**
+ * Limits for the screening model calls. Everything sent to a model is capped,
+ * and one model call (both parse attempts and the SDK's own retry included)
+ * shares one abort budget that stays well under the analyze routes' 60 s
+ * `maxDuration`.
+ */
+export const SCREENING_AI_LIMITS = {
+  /** Abort budget for one scoreResume or runRadar call, all attempts included. */
+  callTimeoutMs: 25_000,
+  /** Transport retries the AI SDK makes for a retryable error (5xx, 429) inside the budget. */
+  maxRetries: 1,
+  /** Attempts when the model's answer fails its schema: the first try plus one retry. */
+  parseAttempts: 2,
+  /** Characters of the job description sent to the model; the rest is cut. */
+  jobDescriptionMaxChars: 8_000,
+  /** Characters of the resume sent to the model; the rest is cut. */
+  resumeMaxChars: 12_000,
+  /** At most this many of the job's other resumes are compared for copycat text. */
+  radarOthersMax: 8,
+  /** Each other resume is sent as an excerpt of its body of at most this many characters. */
+  radarExcerptChars: 600,
+  /** Lines at the top of another resume (name, title, contact details) left out of its excerpt. */
+  radarSkipHeaderLines: 3,
+  /** Strengths and gaps: at most this many items, each at most listItemMaxChars. */
+  listMaxItems: 5,
+  listItemMaxChars: 200,
+  summaryMaxChars: 600,
+  radarNoteMaxChars: 200,
+  fullNameMaxChars: 120,
+} as const;
