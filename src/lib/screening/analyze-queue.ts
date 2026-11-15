@@ -16,8 +16,10 @@ export type AttemptResult =
   /** Any other failure: not retried automatically. */
   | { kind: "error" };
 
+/** Where a resume is in the queue: waiting for a slot, running, waiting to retry, or finished. */
 export type ItemState = "queued" | "running" | "waiting" | "done" | "failed";
 
+/** One resume in the queue: its state, how many attempts were made, and the status the server last gave. */
 export type QueueItem = {
   id: string;
   state: ItemState;
@@ -25,6 +27,7 @@ export type QueueItem = {
   status: ServerStatus | null;
 };
 
+/** A copy of the queue's items and counts, safe for the page to hold. */
 export type QueueSnapshot = {
   items: readonly QueueItem[];
   total: number;
@@ -37,6 +40,7 @@ export type QueueSnapshot = {
   active: boolean;
 };
 
+/** Settings for `createAnalyzeQueue`. `run` makes one attempt at one resume; `sleep` and `random` are replaced in tests. */
 export type QueueOptions = {
   run: (id: string, signal: AbortSignal) => Promise<AttemptResult>;
   concurrency: number;
@@ -77,6 +81,7 @@ export function backoffDelay(
   return Math.round(step * (0.5 + options.random() / 2));
 }
 
+/** Makes the queue. `run(ids)` resolves when every id has finished or the queue was stopped; `stop()` aborts what is in flight; `snapshot()` reads the current state. */
 export function createAnalyzeQueue(options: QueueOptions) {
   const sleep = options.sleep ?? defaultSleep;
   const random = options.random ?? Math.random;

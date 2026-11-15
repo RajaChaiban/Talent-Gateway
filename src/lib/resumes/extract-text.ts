@@ -10,6 +10,7 @@ import {
   type ZipLimits,
 } from "./zip-inflate";
 
+/** Why a read failed. Each value has a recruiter-safe sentence in `REASONS`. */
 export type ExtractionFailure = "too_large" | "too_complex" | "timeout" | "malformed" | "unreadable";
 
 /** A file whose text could not be read. `reason` is safe to show to a recruiter. */
@@ -24,6 +25,7 @@ export class ExtractionError extends Error {
   }
 }
 
+/** The sentence shown to the recruiter for each `ExtractionFailure`. None of them carries file content. */
 export const REASONS = {
   too_large: `The file is larger than ${SIZE_LIMIT_TEXT}.`,
   too_complex: "The file is too long or too complex to read.",
@@ -53,6 +55,7 @@ export type Extracted = { text: string; imageCount: number | null };
 /** Reads a file's text and counts its pictures. `deadline` is a `Date.now()` value the reader must not run past. */
 export type TextReader = (bytes: Uint8Array, deadline: number) => Promise<Extracted>;
 
+/** The few members of a pdf.js document that `readPdfPages` uses, so a stand-in can replace it in tests. */
 export type PdfLike = {
   numPages: number;
   getPage(pageNumber: number): Promise<{
@@ -205,6 +208,7 @@ async function docxReader(): Promise<TextReader> {
   };
 }
 
+/** Optional overrides for `extractText`. `timeoutMs` defaults to `RESUME_LIMITS.extractTimeoutMs`. */
 export type ExtractOptions = {
   timeoutMs?: number;
   /** Replaces the PDF or DOCX reader; tests use it to simulate a slow parse. */

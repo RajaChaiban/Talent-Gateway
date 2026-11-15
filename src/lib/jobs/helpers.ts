@@ -115,6 +115,7 @@ export function formatLocalJobDate(iso: string): string {
   return formatWith(LOCAL_DATE_FORMAT, iso);
 }
 
+/** "1 resume" or "3 resumes". */
 export function resumeCountLabel(count: number): string {
   return count === 1 ? "1 resume" : `${count} resumes`;
 }

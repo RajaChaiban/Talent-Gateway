@@ -9,6 +9,7 @@ type InvitationEmail = {
   idempotencyKey: string;
 };
 
+/** Delivers one invitation and resolves to the message id. Callers receive it as a parameter so tests can pass a stand-in. */
 export type SendInvitationEmail = (email: InvitationEmail) => Promise<string>;
 
 type EnvSource = Readonly<Record<string, string | undefined>>;

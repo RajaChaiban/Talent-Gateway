@@ -4,6 +4,7 @@ import {
   type User,
 } from "@supabase/supabase-js";
 
+/** Who is signed in. "unavailable" means Supabase Auth could not answer, which is not the same as signed out. */
 export type UserCheck =
   | { status: "signed-in"; user: User }
   | { status: "signed-out" }

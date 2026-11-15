@@ -15,6 +15,7 @@ import { settledStatus, summarize, type JobStatus, type Progress, type Work } fr
 
 type Client = Pick<ServerClient, "from">;
 
+/** The columns the screening pipeline reads for one resume. */
 export type ResumeForAnalysis = {
   id: string;
   job_id: string;
@@ -26,6 +27,7 @@ export type ResumeForAnalysis = {
   ats_override: boolean;
 };
 
+/** One resume's analysis columns, or null when no row is visible to the recruiter. */
 export async function getResumeForAnalysis(
   supabase: Client,
   id: string,
@@ -133,6 +135,7 @@ export async function getResumeGate(
   return data;
 }
 
+/** The candidate saved for a resume, or null when it has not been scored. */
 export async function findCandidate(supabase: Client, resumeId: string): Promise<Candidate | null> {
   const { data, error } = await supabase
     .from("candidates")
@@ -143,6 +146,7 @@ export async function findCandidate(supabase: Client, resumeId: string): Promise
   return data ? asCandidate(data) : null;
 }
 
+/** The values for a new candidate row. `match_score` is in stored tenths. */
 export type NewCandidate = {
   job_id: string;
   resume_id: string;

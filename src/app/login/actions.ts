@@ -10,6 +10,7 @@ import {
   type SignInFieldErrors,
 } from "@/lib/auth/sign-in-schema";
 
+/** What the sign-in form shows after a submit: the email to keep in the field, per-field errors and one form-level error. */
 export type SignInState = {
   email: string;
   fieldErrors: SignInFieldErrors;
@@ -21,6 +22,7 @@ function formString(formData: FormData, name: string): string | null {
   return typeof value === "string" ? value : null;
 }
 
+/** Server action for the sign-in form. Returns a state with errors on a bad input or a failed sign-in; on success it redirects to the validated `next` path and does not return. */
 export async function signIn(
   _previous: SignInState,
   formData: FormData,

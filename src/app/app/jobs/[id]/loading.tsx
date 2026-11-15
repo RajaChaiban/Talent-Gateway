@@ -1,5 +1,8 @@
+// Loading skeleton shown while a job page is being fetched.
+
 import { Skeleton } from "@/components/ui/skeleton";
 
+/** Placeholder blocks that match the job page's heading, description and list areas. */
 export default function JobLoading() {
   return (
     <div

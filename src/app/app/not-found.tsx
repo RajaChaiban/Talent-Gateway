@@ -1,7 +1,10 @@
+// Not-found screen for the recruiter area, used when a job or page does not exist for the signed-in user.
+
 import { SearchX } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 
+/** Tells the user the page or job is missing or the link is out of date, with a link back to the job list. */
 export default function RecruiterNotFound() {
   return (
     <section

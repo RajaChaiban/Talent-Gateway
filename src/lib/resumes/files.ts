@@ -1,9 +1,12 @@
 import { RESUME_LIMITS, UPLOAD_LIMITS } from "@/lib/config";
 
+/** The content type of a Word (.docx) file. */
 export const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+/** The content type of a PDF file. */
 export const PDF_MIME = "application/pdf";
 
+/** The two kinds of resume file the product accepts. */
 export type ResumeKind = "pdf" | "docx";
 
 /** The type a file name claims by its extension. */
@@ -14,6 +17,7 @@ export function kindOfFileName(fileName: string): ResumeKind | null {
   return null;
 }
 
+/** True when `contentType` is exactly one of the types in `UPLOAD_LIMITS` (PDF or DOCX). */
 export function isAllowedMimeType(contentType: string): boolean {
   return (UPLOAD_LIMITS.allowedMimeTypes as readonly string[]).includes(contentType);
 }
@@ -39,6 +43,7 @@ export function safeFileName(original: string): string {
   return `${cut || "resume"}${extension}`;
 }
 
+/** The storage key of a resume: `jobId/resumeId/safe-name`. The resume id in the path keeps two files with the same name apart. */
 export function storagePath(jobId: string, resumeId: string, fileName: string): string {
   return `${jobId}/${resumeId}/${safeFileName(fileName)}`;
 }

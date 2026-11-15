@@ -1,7 +1,9 @@
 import type { AtsCheckId } from "@/lib/config";
 
+/** Whether a resume is readable enough to go on to AI scoring. */
 export type AtsStatus = "ATS_READY" | "NOT_ATS_READY";
 
+/** What the ATS check reads about one resume file. */
 export type AtsInput = {
   /** Text extracted from the resume file. */
   text: string;
@@ -12,6 +14,7 @@ export type AtsInput = {
   imageCount: number | null;
 };
 
+/** The outcome of one ATS check. */
 export type CheckResult = {
   id: AtsCheckId;
   passed: boolean;
@@ -27,6 +30,7 @@ export type CheckResult = {
   value: number;
 };
 
+/** The outcome of the whole ATS check for one resume. */
 export type AtsResult = {
   status: AtsStatus;
   /** 0 to 100: the sum of the weights of the passed checks. ATS_READY needs this at the pass mark and every required check passed. */

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+/** Server action behind the Sign out button: ends this browser's session and sends the user to the landing page. */
 export async function signOut() {
   const supabase = await createClient();
   // "local" ends only this browser's session: the demo login is shared, so a

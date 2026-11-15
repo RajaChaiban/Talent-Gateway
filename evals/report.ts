@@ -38,9 +38,13 @@ export type RunMeta = {
   only: boolean;
 };
 
+/** Markers in README.md around the list of run reports; a run rewrites only the text between them. */
 export const README_LIST_START = "<!-- reports:start -->";
+/** Closing marker of the run report list in README.md. */
 export const README_LIST_END = "<!-- reports:end -->";
+/** Markers in README.md around the list of comparison reports. */
 export const README_COMPARISONS_START = "<!-- comparisons:start -->";
+/** Closing marker of the comparison report list in README.md. */
 export const README_COMPARISONS_END = "<!-- comparisons:end -->";
 
 /** The label part of a comparison report's file name: `<date>-compare-<a>-vs-<b>.md`. */
@@ -287,10 +291,12 @@ export function consoleSummary(meta: RunMeta, result: Grade): string {
   ].join("\n");
 }
 
+/** Makes text safe for one Markdown table cell: escapes pipes and flattens line breaks. */
 export function mdCell(text: string): string {
   return text.replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
 
+/** A Markdown table from a header row and body rows; every cell goes through `mdCell`. */
 export function mdTable(header: readonly string[], rows: readonly (readonly string[])[]): string {
   return [
     `| ${header.map(mdCell).join(" | ")} |`,

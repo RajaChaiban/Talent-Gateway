@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const title = `${APP_NAME} · ${APP_DESCRIPTION}`;
 const description = `Paste a job description and drop in resumes: ${APP_NAME} screens candidates, catches unreadable files upfront, and ranks top talent with objective match scores.`;
 
+/** Search and social tags for the landing page. */
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: { absolute: title },
@@ -75,6 +76,7 @@ function SignIn({ primary = false }: { primary?: boolean }) {
   );
 }
 
+/** The public landing page at /. */
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">

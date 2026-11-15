@@ -17,6 +17,7 @@ export async function runPool<T, R>(
   return results;
 }
 
+/** How `withRetry` decides to retry and how long it waits. */
 export type RetryOptions = {
   /** Attempts in all, the first included. */
   attempts: number;

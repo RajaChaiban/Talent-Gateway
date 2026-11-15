@@ -7,7 +7,9 @@ import { completeResume, downloadResumeFile } from "./queries";
 import type { StoredResume } from "./types";
 import type { ServerClient } from "@/lib/auth/verified-user";
 
+/** Shown when the stored file has no bytes. */
 export const EMPTY_FILE_MESSAGE = "The file is empty.";
+/** Shown when the bytes are neither a PDF nor a DOCX, whatever the name or the declared type says. */
 export const WRONG_TYPE_MESSAGE = "The file is not a real PDF or Word (.docx) document.";
 
 /** The bytes are one supported type and the name says the other. */
@@ -16,6 +18,7 @@ export const MISTYPED_MESSAGE: Record<ResumeKind, string> = {
   pdf: "This is a PDF file saved with a .docx name.",
 };
 
+/** The outcome of `completeUpload`: `missing` (no file in storage), `gone` (the row was removed meanwhile), or `done` with the character count or the failure message. */
 export type CompleteResult =
   | { state: "missing" }
   | { state: "gone" }

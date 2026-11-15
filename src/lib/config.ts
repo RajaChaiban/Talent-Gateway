@@ -1,6 +1,8 @@
 import { asStored, type StoredScore } from "./score";
 
+/** The product's display name. Read it from here; never write the name into a component. */
 export const APP_NAME = "Talent Gateway";
+/** The one-line product description used for the page metadata and the landing page. */
 export const APP_DESCRIPTION =
   "Intelligent resume screening and candidate ranking for modern hiring teams.";
 
@@ -13,6 +15,10 @@ export const UPLOAD_LIMITS = {
   maxBytes: 5 * 1024 * 1024,
 } as const;
 
+/**
+ * Limits for uploading and reading resumes, shared by the browser queue, the sign and complete routes and the text readers.
+ * Each cap keeps one untrusted file from costing unbounded time or memory.
+ */
 export const RESUME_LIMITS = {
   maxFilesPerDrop: 20,
   maxPerJob: 50,
@@ -52,6 +58,7 @@ export const JOB_THRESHOLD_DEFAULTS = {
   invite: asStored(70),
 } as const;
 
+/** The ids of the seven ATS checks. Each has a weight and a required flag in `ATS_CONFIG`. */
 export type AtsCheckId =
   | "readable_text"
   | "contact_info"
@@ -61,6 +68,7 @@ export type AtsCheckId =
   | "file"
   | "picture";
 
+/** The rules the ATS check judges a resume by. They are data, so a rule is tuned here without touching the check's code. */
 export interface AtsConfig {
   /** Fewer characters than this after collapsing whitespace fails readable_text. */
   readonly minTextChars: number;
@@ -101,6 +109,10 @@ function deepFreeze<T extends object>(value: T): T {
   return Object.freeze(value);
 }
 
+/**
+ * The ATS check's settings, frozen so nothing can change them at run time.
+ * The weights add up to 100 and a resume is ATS_READY from 60 (6.0 on the 0 to 10 scale) with every required check passed.
+ */
 export const ATS_CONFIG: AtsConfig = deepFreeze({
   minTextChars: 300,
   requiredSections: ["experience", "education", "skills"],
@@ -212,8 +224,10 @@ export const ATS_CONFIG: AtsConfig = deepFreeze({
   passScore: 60,
 });
 
+/** The colour band of a match score: green is top talent, amber is worth a look, red is a low match. */
 export type TrafficLight = "green" | "amber" | "red";
 
+/** The band a stored score falls in, using the cut-offs in `SCORE_BANDS` (8.0 and 5.0). */
 export function trafficLight(score: StoredScore): TrafficLight {
   if (score >= SCORE_BANDS.trafficLight.green) return "green";
   if (score >= SCORE_BANDS.trafficLight.amber) return "amber";

@@ -4,6 +4,10 @@ import { getCurrentUser } from "./current-user";
 import { signedOutPath } from "./route-access";
 import type { ServerClient } from "./verified-user";
 
+/**
+ * Thrown when Supabase Auth could not answer, so the error boundary shows a retryable error
+ * instead of signing the user out.
+ */
 export class AuthUnavailableError extends Error {
   constructor() {
     super("Supabase Auth could not verify the session");

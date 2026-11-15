@@ -140,6 +140,7 @@ function without(record: Record<string, string>, key: string): Record<string, st
   return next;
 }
 
+/** The resume drop zone and the list of this job's uploaded resumes. Files go through a small upload queue and each file's progress, retry, download and removal show on its row. */
 export function ResumesSection({
   jobId,
   resumes,

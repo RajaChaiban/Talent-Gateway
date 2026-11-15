@@ -2,12 +2,18 @@ import { z } from "zod";
 import { JOB_THRESHOLD_DEFAULTS } from "@/lib/config";
 import { scoreField } from "@/lib/score-schema";
 
+/** Longest job title, in characters. */
 export const TITLE_MAX = 200;
+/** Longest job description, in characters. */
 export const DESCRIPTION_MAX = 20_000;
 
 const topTalent = scoreField("Top talent threshold");
 const invite = scoreField("Invite threshold");
 
+/**
+ * The new-job request: title, description and the two thresholds (typed on the 0 to 10 scale, parsed to stored tenths,
+ * with defaults from JOB_THRESHOLD_DEFAULTS).
+ */
 export const createJobSchema = z.object({
   title: z
     .string({ error: "Enter a job title" })
@@ -26,6 +32,7 @@ export const createJobSchema = z.object({
   invite_threshold: invite.default(JOB_THRESHOLD_DEFAULTS.invite),
 });
 
+/** The request that changes thresholds. At least one of the two must be sent. */
 export const updateThresholdsSchema = z
   .object({
     top_talent_threshold: topTalent.optional(),
@@ -37,14 +44,19 @@ export const updateThresholdsSchema = z
     { message: "Send top_talent_threshold or invite_threshold" },
   );
 
+/** A job id from the URL; it must be a UUID. */
 export const jobIdSchema = z.uuid({ error: "Job id is not valid" });
+/** A resume id from the URL; it must be a UUID. */
 export const resumeIdSchema = z.uuid({ error: "Resume id is not valid" });
 
 /** Thresholds are typed on the 0 to 10 scale and parsed to stored tenths: both types below hold stored integers. */
 export type CreateJobInput = z.output<typeof createJobSchema>;
+/** The validated threshold change, with stored tenths. */
 export type UpdateThresholdsInput = z.output<typeof updateThresholdsSchema>;
 
+/** A field of the new-job form that can carry an error message. */
 export type CreateJobField = "title" | "description" | "top_talent_threshold" | "invite_threshold";
+/** At most one message per new-job field. */
 export type CreateJobFieldErrors = Partial<Record<CreateJobField, string>>;
 
 const CREATE_FIELDS: readonly string[] = [
@@ -54,6 +66,7 @@ const CREATE_FIELDS: readonly string[] = [
   "invite_threshold",
 ];
 
+/** Reduces a validation error to the first message for each new-job field, for the form to show under that field. */
 export function createJobFieldErrors(error: z.ZodError): CreateJobFieldErrors {
   const errors: CreateJobFieldErrors = {};
   for (const issue of error.issues) {

@@ -18,6 +18,7 @@ export const SAMPLE_RESUMES = [
   { file: "7-with-photo.pdf", shows: "A portrait in the CV: set aside as Not ATS-ready" },
 ] as const;
 
+/** The URL of one sample file, for a download link. */
 export function samplePath(file: string): string {
   return `${SAMPLES_PATH}/${file}`;
 }

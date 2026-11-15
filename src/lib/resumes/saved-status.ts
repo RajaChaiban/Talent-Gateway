@@ -1,6 +1,7 @@
 import { STORED_FAILED_MESSAGE, UPLOAD_UNFINISHED_MESSAGE } from "./messages";
 import type { ResumeListItem } from "./types";
 
+/** The label a stored resume shows, and its tone, which picks the colour. */
 export type SavedStatus = { tone: "success" | "warning" | "error"; text: string };
 
 /**

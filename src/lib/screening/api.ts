@@ -8,7 +8,9 @@ import { resumeNotFoundResponse } from "@/lib/resumes/api";
 import { settleJob } from "./queries";
 
 export { resumeNotFoundResponse };
+/** The 409 message of score-anyway for a resume that already has a candidate. */
 export const ALREADY_SCORED_MESSAGE = "This resume has already been scored.";
+/** The 409 message of score-anyway for a resume the ATS check did not set aside. */
 export const NOT_SET_ASIDE_MESSAGE = "This resume was not set aside.";
 const MODEL_BUSY_MESSAGE = "The AI service is busy. Trying again shortly.";
 

@@ -20,6 +20,7 @@ import {
   type ResumeForAnalysis,
 } from "./queries";
 
+/** How one resume ended: `scored` (it has a candidate), `ats_failed` (set aside, no model call), `not_extracted` (no text yet) or `failed` (the analysis failed and was recorded). */
 export type AnalyzeStatus = "scored" | "ats_failed" | "not_extracted" | "failed";
 
 /** The resume's resulting status and its job, which the route settles afterwards. */

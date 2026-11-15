@@ -62,6 +62,7 @@ export async function proxy(request: NextRequest) {
   return redirect;
 }
 
+/** The paths the proxy runs on; everything else skips it. */
 export const config = {
   matcher: [
     // The recruiter area, including any file-like path under it.

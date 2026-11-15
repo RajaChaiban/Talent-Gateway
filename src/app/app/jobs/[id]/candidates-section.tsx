@@ -19,6 +19,7 @@ import { RankedList } from "./ranked-list";
 const TAB_IDS = ["ranked", "not-ready"] as const;
 type TabId = (typeof TAB_IDS)[number];
 
+// An unknown or missing `?tab=` value falls back to the ranked tab instead of failing.
 const tabSchema = z.enum(TAB_IDS).catch("ranked");
 
 type Props = {
@@ -42,6 +43,7 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`;
 }
 
+/** The job page's candidate tabs: Ranked and Not ATS-ready, plus the queued resumes. The open tab and the open candidate are kept in the URL (`tab`, `candidate`) so a link or reload returns to the same view. */
 export function CandidatesSection({
   candidates,
   notAtsReady,

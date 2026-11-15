@@ -1,5 +1,6 @@
 import { asStored, type StoredScore } from "@/lib/score";
 
+/** One example job for the landing page preview: its ranked candidates and the unreadable file that was set aside. */
 export type SampleJob = {
   /** Short label for the tab. */
   tab: string;

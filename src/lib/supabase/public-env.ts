@@ -9,6 +9,7 @@ export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
 });
 
+/** The checked public Supabase values: the project URL and the anon key. */
 export type PublicSupabaseEnv = z.infer<typeof publicEnvSchema>;
 
 /** Names the variables that are wrong, never their values. */

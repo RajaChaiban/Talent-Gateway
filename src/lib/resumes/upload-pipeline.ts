@@ -8,6 +8,7 @@ import {
 } from "./client-api";
 import type { Outcome, WorkerContext } from "./upload-queue";
 
+/** Shown when the server says a file could not be read but gives no reason. */
 export const UNREADABLE_MESSAGE = "The file could not be read.";
 
 /** What one file has already achieved, kept across retries so a retry resumes instead of starting over. */
@@ -21,12 +22,15 @@ export type UploadProgress = {
   readFailed?: boolean;
 };
 
+/** One file in the upload queue: the file, the content type to send it as, and its progress. */
 export type UploadJob = { file: File; contentType: string; progress: UploadProgress };
 
+/** Starting progress for a file about to be queued: a fresh random resume id, nothing signed and nothing uploaded. */
 export function newUploadProgress(): UploadProgress {
   return { resumeId: crypto.randomUUID(), signed: null, uploaded: false };
 }
 
+/** The three calls the upload worker makes. Tests pass fakes in their place. */
 export type PipelineApi = {
   sign: typeof signResume;
   upload: typeof uploadToStorage;

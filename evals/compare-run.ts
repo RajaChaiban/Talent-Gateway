@@ -4,6 +4,7 @@ import { compareRuns, comparisonFileName, comparisonSummary, renderComparison } 
 import { comparisonFiles, localDate, updateReadmeComparisons } from "./report";
 import { parseScoresFile, type ScoresFile } from "./scores-file";
 
+/** The help text printed when `eval:compare` is called with the wrong arguments. */
 export const COMPARE_USAGE = `Usage: npm run eval:compare -- <a.json> <b.json>
 
   Compares two runs' scores files (written next to each report under docs/evals/)

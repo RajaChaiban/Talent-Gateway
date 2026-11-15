@@ -1,3 +1,4 @@
+/** Every error code a route handler may put in its error body. docs/BACKEND.md says what each one means. */
 export type ErrorCode =
   | "unauthorized"
   | "auth_unavailable"
@@ -25,6 +26,7 @@ export function jsonError(
   return Response.json({ error: { code, message } }, { status, headers });
 }
 
+/** The one shape every successful route handler answer takes: `{ data }`, with the given status (200 unless told otherwise). */
 export function jsonData<T>(data: T, status = 200): Response {
   return Response.json({ data }, { status });
 }

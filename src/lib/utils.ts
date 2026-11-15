@@ -16,6 +16,7 @@ const twMerge = extendTailwindMerge({
   },
 });
 
+/** Joins class names (strings, arrays, conditions) and resolves clashing Tailwind classes, the later one winning. */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

@@ -27,6 +27,7 @@ export function needsWork(row: WorkRow, scored: ReadonlySet<string>): boolean {
   return row.ats_status === null || row.ats_status === "ATS_READY" || row.ats_override;
 }
 
+/** The ids of the resumes that still need analysis, in row order. */
 export function resumesNeedingWork(
   rows: readonly WorkRow[],
   scored: ReadonlySet<string>,
@@ -37,6 +38,7 @@ export function resumesNeedingWork(
 /** A job's resumes and the ids that have a candidate. */
 export type Work = { rows: WorkRow[]; scored: Set<string> };
 
+/** Counts that show how far a job's analysis has got. */
 export type Progress = {
   /** Every resume of the job, uploads in progress included. */
   total: number;
@@ -52,6 +54,7 @@ export type Progress = {
   remaining: number;
 };
 
+/** Counts a job's resumes into a `Progress`. `scored` holds the ids that have a candidate. */
 export function summarize(rows: readonly WorkRow[], scored: ReadonlySet<string>): Progress {
   const withText = rows.filter((row) => row.has_text);
   const failed = withText.filter((row) => row.status === "failed" && !scored.has(row.id));

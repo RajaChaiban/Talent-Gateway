@@ -1,3 +1,4 @@
+/** Where a signed-in user lands when no safe `next` path was given. */
 export const DEFAULT_SIGNED_IN_PATH = "/app";
 
 const PROBE_ORIGIN = "http://same-site.invalid";

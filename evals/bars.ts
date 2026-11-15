@@ -11,6 +11,7 @@ import type { Band } from "./types";
 
 export type BarSettingId = "default" | "strict" | "lenient";
 
+/** One pair of score bars to test: a name and the two stored-tenths scores a candidate must reach. */
 export type BarSetting = {
   id: BarSettingId;
   name: string;
@@ -31,6 +32,7 @@ const LENIENT_BARS: BarSetting = { id: "lenient", name: "Lenient", topTalent: as
 /** Default first; strict and lenient are reported, not graded. */
 export const BAR_SETTINGS: readonly BarSetting[] = [DEFAULT_BARS, STRICT_BARS, LENIENT_BARS];
 
+/** Which bars one score clears under one setting. */
 export type BarPlacement = {
   topTalent: boolean;
   /** The score is at or above the invite bar (a top-talent score usually is too). */
@@ -51,11 +53,13 @@ export function placementText(placement: BarPlacement): string {
 /** A case with a stated band and its run-0 score (null when it has none). */
 export type BarCase = { id: string; band: Band; score: number | null };
 
+/** A banded case with its placement under every bar setting. */
 export type BarRow = BarCase & {
   /** Per setting id; null when the case has no score. */
   placements: Readonly<Record<BarSettingId, BarPlacement | null>>;
 };
 
+/** How many scored cases fall in each place under one bar setting. */
 export type BarSummary = {
   setting: BarSetting;
   topTalent: number;
@@ -67,6 +71,7 @@ export type BarSummary = {
   unscored: number;
 };
 
+/** The result of test 7: every row, one summary per setting, and the default setting's pass checks. */
 export type BarsGrade = {
   rows: BarRow[];
   summaries: BarSummary[];

@@ -33,6 +33,7 @@ export class JobsDataError extends Error {
  */
 type Client = Pick<ServerClient, "from">;
 
+/** The recruiter's jobs, newest first, up to JOB_LIST_LIMIT, each with its resume count. */
 export async function listJobs(supabase: Client): Promise<JobListItem[]> {
   const { data, error } = await supabase
     .from("jobs")
@@ -44,6 +45,7 @@ export async function listJobs(supabase: Client): Promise<JobListItem[]> {
   return data.map(({ resumes, ...job }) => asJobListItem(job, resumes[0]?.count ?? 0));
 }
 
+/** Inserts a job and returns the saved row. */
 export async function createJob(supabase: Client, input: CreateJobInput): Promise<Job> {
   const { data, error } = await supabase.from("jobs").insert(input).select().single();
   if (error) throw new JobsDataError("create job", error);

@@ -19,12 +19,15 @@ export type StoredScore = number & { readonly [storedBrand]: true };
 /** A score from 0 to 10 with at most one decimal: what the API sends and receives and people see. */
 export type Score = number & { readonly [shownBrand]: true };
 
+/** The lowest stored score: 0 tenths, shown as 0.0. */
 export const STORED_MIN = 0;
+/** The highest stored score: 100 tenths, shown as 10.0. */
 export const STORED_MAX = 100;
 
 /** The sentence every message about a score field ends with. */
 export const SCORE_SCALE_MESSAGE = "must be a number from 0 to 10 with at most one decimal";
 
+/** True for a whole number from 0 to 100. `asStored` throws when this is false. */
 export function isStoredScore(value: unknown): value is StoredScore {
   return (
     typeof value === "number" &&

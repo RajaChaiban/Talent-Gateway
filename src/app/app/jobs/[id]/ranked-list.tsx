@@ -16,6 +16,7 @@ type Props = {
   onInviteFocused: () => void;
 };
 
+/** The ranked candidates, best match first, as one expandable row each. Only one row is open at a time; `openId` says which. */
 export function RankedList({
   candidates,
   topTalent,

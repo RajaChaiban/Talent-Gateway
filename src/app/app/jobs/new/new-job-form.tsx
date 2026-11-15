@@ -1,5 +1,7 @@
 "use client";
 
+// The new-job form: title, description and the two score bars. Posts to `createJobAction` and shows its field errors.
+
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { CircleAlert, LoaderCircle } from "lucide-react";
@@ -35,6 +37,7 @@ function FieldError({ id, message }: { id: string; message: string | undefined }
   );
 }
 
+/** Client form for creating a job. The two score bars live in state because the sliders are controlled; they are posted as hidden fields. */
 export function NewJobForm() {
   const [state, formAction, pending] = useActionState(createJobAction, initialState);
   const [topTalent, setTopTalent] = useState(state.values.top_talent_threshold);

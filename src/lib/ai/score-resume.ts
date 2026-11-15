@@ -12,6 +12,10 @@ export type ScoreBreakdown = Omit<ScoreTotal, "stored"> & {
   must_haves: ScoreOutput["must_haves"];
 };
 
+/**
+ * What scoring one resume returns: the name, the total as stored tenths, the summary, strengths and gaps,
+ * and how the total was added up.
+ */
 export type ScoreResult = {
   full_name: string;
   /** The total, added up in code from the model's parts, as stored tenths. */
