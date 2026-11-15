@@ -20,20 +20,32 @@ Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. `src
 ```
 src/
   lib/
+    auth/                         sign-in input checks, error messages, the safe redirect path and the one place that asks Supabase who is signed in (`verified-user.ts`)
     supabase/                     the server Supabase client (`server.ts`) and the check of its two public variables (`public-env.ts`)
     jobs/                         pure helpers for the landing page's product preview (`helpers.ts`, `radar.ts`); no data access
 ```
 
 ## 3. Auth and access
 
-None yet. Every page is public.
+Supabase Auth, email and password. Sign-ups are disabled on the Supabase project, so only the demo user can sign in. The session lives in cookies set by the server client.
+
+- `/login` is the only page that signs people in. Every page is still public: nothing redirects a signed-out visitor yet.
+- Who is signed in is always asked from Supabase (`auth.getUser()`), never read from the unverified cookie.
+- After sign-in the browser goes to the `next` path, which is accepted only when it is a path on this site; anything else becomes `/app`.
+- A failed sign-in says "Email or password is incorrect", never which of the two was wrong.
 
 ## 4. API contract
 
-No route handlers and no server actions yet. Add one row per method and path when the first route is merged.
+No route handlers yet. Add one row per method and path when the first route is merged.
 
 | Method | Path | Auth | Input | Does | Returns |
 |---|---|---|---|---|---|
+
+### Server actions
+
+| Action | File | Auth | Input | Does | Returns |
+|---|---|---|---|---|---|
+| `signIn` | `src/app/login/actions.ts` | Public | Form fields `email`, `password`, `next` | Checks the input, signs in with Supabase Auth, then redirects to `next` | Field errors or one form error; redirects on success |
 
 ## 5. Model calls
 
