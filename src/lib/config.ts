@@ -2,7 +2,7 @@ import { asStored, type StoredScore } from "./score";
 
 export const APP_NAME = "Talent Gateway";
 export const APP_DESCRIPTION =
-  "Enterprise AI resume screening with zero-token edge filtering and Vercel AI Gateway.";
+  "Intelligent resume screening and candidate ranking for modern hiring teams.";
 
 /** Score bands stored in tenths (0 to 100), representing 0.0 to 10.0 */
 export const SCORE_BANDS = {
