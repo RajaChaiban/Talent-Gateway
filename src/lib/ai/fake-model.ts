@@ -1,5 +1,8 @@
 import type { LanguageModel } from "ai";
+import { SCORE_WEIGHTS } from "@/lib/config";
+import { asStored, STORED_MAX, toScore, type StoredScore } from "@/lib/score";
 import type { FakeReply } from "./model";
+import type { RoleMatch } from "./total-score";
 
 /**
  * Test-only stand-in model for the browser suite: deterministic answers, no
@@ -8,7 +11,7 @@ import type { FakeReply } from "./model";
  * loaded only here, and only when a stand-in is built.
  *
  * Markers a test can put in a resume's text:
- * - `E2E-SCORE: 85` sets match_score (stored tenths), default 75.
+ * - `E2E-SCORE: 85` sets the total the parts add up to (stored tenths), default 75.
  * - `E2E-FAIL-ONCE` makes the first call of each kind for that exact resume
  *   text fail, and later calls succeed, so "Retry failed" can be proven.
  */
@@ -56,7 +59,50 @@ function failOnceFor(kind: string, resume: string): void {
   }
 }
 
-/** The stand-in for scoreResume: the first line is the name; `E2E-SCORE: n` sets the score. */
+/** Must-haves in a stand-in answer; each one shown adds 0.3 to the additions. */
+const FAKE_MUST_HAVES = 10;
+
+/**
+ * Parts that totalScore adds up to `target` (stored tenths). A target of 5.0
+ * or more is the same role plus additions; below that, a related or unrelated
+ * start with additions scaled down by start / 5. Additions are whole tenths,
+ * so the scaled total lands within 0.05 of the target and rounds onto it.
+ */
+export function fakeScoreParts(target: StoredScore) {
+  const goal: number = toScore(target);
+  const { same, related, unrelated } = SCORE_WEIGHTS.start;
+  const [roleMatch, start]: [RoleMatch, number] =
+    goal >= same
+      ? ["same", same]
+      : goal >= related.max
+        ? ["related", related.max]
+        : goal >= related.min
+          ? ["related", goal]
+          : goal > unrelated.max
+            ? ["unrelated", unrelated.max]
+            : ["unrelated", goal];
+  const tenths = start === goal ? 0 : Math.round(((goal - start) / (start / same)) * 10);
+  const shown = Math.min(FAKE_MUST_HAVES, Math.floor(tenths / 3));
+  let rest = tenths - shown * 3;
+  const take = (max: number) => {
+    const taken = Math.min(Math.round(max * 10), rest);
+    rest -= taken;
+    return taken / 10;
+  };
+  return {
+    role_match: roleMatch,
+    start_score: start,
+    must_haves: Array.from({ length: FAKE_MUST_HAVES }, (_, index) => ({
+      requirement: `Requirement ${index + 1}`,
+      status: index < shown ? ("shown" as const) : ("missing" as const),
+    })),
+    evidence: take(SCORE_WEIGHTS.evidenceMax),
+    proof_of_work: take(SCORE_WEIGHTS.proofOfWorkMax),
+    education: take(SCORE_WEIGHTS.educationMax),
+  };
+}
+
+/** The stand-in for scoreResume: the first line is the name; `E2E-SCORE: n` sets the total. */
 export function fakeScoreReply(prompt: string): string {
   const resume = resumeOf(prompt);
   failOnceFor("score", resume);
@@ -64,7 +110,7 @@ export function fakeScoreReply(prompt: string): string {
   const firstLine = resume.split("\n").find((line) => line.trim().length > 0) ?? "";
   return JSON.stringify({
     full_name: firstLine.trim().slice(0, 120),
-    match_score: marked ? Math.min(100, Number(marked[1])) : DEFAULT_SCORE,
+    ...fakeScoreParts(asStored(marked ? Math.min(STORED_MAX, Number(marked[1])) : DEFAULT_SCORE)),
     match_summary: "Deterministic test summary.",
     strengths: ["Relevant experience for the role."],
     gaps: ["No gap found by the test model."],

@@ -6,8 +6,8 @@ import {
   storedZip,
   ZipMalformedError,
   ZipTooLargeError,
+  type ZipContents,
   type ZipLimits,
-  type ZipPart,
 } from "./zip-inflate";
 
 export type ExtractionFailure = "too_large" | "too_complex" | "timeout" | "malformed" | "unreadable";
@@ -47,15 +47,56 @@ export function normalizeText(raw: string): string {
     .trim();
 }
 
-/** Reads a file's text. `deadline` is a `Date.now()` value the reader must not run past. */
-export type TextReader = (bytes: Uint8Array, deadline: number) => Promise<string>;
+/** What a file holds: its text, and how many pictures it holds (null when they were not counted). */
+export type Extracted = { text: string; imageCount: number | null };
+
+/** Reads a file's text and counts its pictures. `deadline` is a `Date.now()` value the reader must not run past. */
+export type TextReader = (bytes: Uint8Array, deadline: number) => Promise<Extracted>;
 
 export type PdfLike = {
   numPages: number;
   getPage(pageNumber: number): Promise<{
     getTextContent(): Promise<{ items: readonly unknown[] }>;
+    /** The page's drawing operations; only their operator codes are read. */
+    getOperatorList(): Promise<{ fnArray: readonly number[] }>;
   }>;
 };
+
+/** The pdf.js operator codes that paint a picture. */
+export type ImagePaintOps = ReadonlySet<number>;
+
+type PdfOps = Readonly<
+  Record<
+    | "paintImageXObject"
+    | "paintImageXObjectRepeat"
+    | "paintInlineImageXObject"
+    | "paintInlineImageXObjectGroup"
+    | "paintImageMaskXObject"
+    | "paintImageMaskXObjectGroup"
+    | "paintImageMaskXObjectRepeat",
+    number
+  >
+>;
+
+/**
+ * Every pdf.js operation that paints a picture, taken from its `OPS` table: an
+ * image object, an inline image or an image mask, and the grouped and repeated
+ * forms pdf.js merges runs of them into. Each operation counts as one picture,
+ * so a picture repeated in one run (a row of identical icons) counts once. A
+ * 1x1 mask that pdf.js turns into a solid fill (`paintSolidColorImageMask`) is
+ * a fill, not a picture, and is left out.
+ */
+export function imagePaintOps(ops: PdfOps): ImagePaintOps {
+  return new Set([
+    ops.paintImageXObject,
+    ops.paintImageXObjectRepeat,
+    ops.paintInlineImageXObject,
+    ops.paintInlineImageXObjectGroup,
+    ops.paintImageMaskXObject,
+    ops.paintImageMaskXObjectGroup,
+    ops.paintImageMaskXObjectRepeat,
+  ]);
+}
 
 function textOf(item: unknown): string {
   if (typeof item !== "object" || item === null || !("str" in item)) return "";
@@ -68,31 +109,42 @@ function textOf(item: unknown): string {
  * Reads a PDF page by page and checks the clock before each page, so a long
  * document stops at the deadline instead of running on. Refuses a PDF with too
  * many pages before reading any of them.
+ *
+ * Pictures are counted from each page's operator list (its drawing operations,
+ * built without rendering anything): every operation in `imageOps` is one
+ * picture. A page whose operations cannot be listed fails the whole read like
+ * any other unreadable page, so a picture is never hidden by a count that
+ * quietly gave up.
  */
 export async function readPdfPages(
   pdf: PdfLike,
   deadline: number,
+  imageOps: ImagePaintOps,
   now: () => number = Date.now,
-): Promise<string> {
+): Promise<Extracted> {
   if (pdf.numPages > RESUME_LIMITS.maxPdfPages) throw fail("too_complex");
 
   const pages: string[] = [];
+  let imageCount = 0;
   for (let number = 1; number <= pdf.numPages; number += 1) {
     if (now() > deadline) throw fail("timeout");
     const page = await pdf.getPage(number);
     const content = await page.getTextContent();
     pages.push(content.items.map(textOf).join(""));
+    const { fnArray } = await page.getOperatorList();
+    imageCount += fnArray.filter((op) => imageOps.has(op)).length;
   }
-  return pages.join("\n\n");
+  return { text: pages.join("\n\n"), imageCount };
 }
 
 /** Loads the library first, so the time guard covers reading the file, not loading code. */
 async function pdfReader(): Promise<TextReader> {
-  const { getDocumentProxy } = await import("unpdf");
+  const { getDocumentProxy, getResolvedPDFJS } = await import("unpdf");
+  const imageOps = imagePaintOps((await getResolvedPDFJS()).OPS);
   return async (bytes, deadline) => {
     const pdf = await getDocumentProxy(new Uint8Array(bytes));
     try {
-      return await readPdfPages(pdf, deadline);
+      return await readPdfPages(pdf, deadline, imageOps);
     } finally {
       await pdf.loadingTask.destroy();
     }
@@ -105,13 +157,30 @@ const DOCX_LIMITS: ZipLimits = {
   totalBytes: RESUME_LIMITS.maxDocxUncompressedBytes,
 };
 
+/** Where a DOCX keeps its pictures. Part names are case-insensitive in the package format. */
+const DOCX_MEDIA_FOLDER = "word/media/";
+
+/**
+ * The pictures of a DOCX: the files in its `word/media/` folder (a folder entry
+ * itself is not counted). Names are decoded as UTF-8, which leaves the ASCII
+ * folder name intact whatever the archive's name encoding.
+ */
+export function docxImageCount(contents: ZipContents): number {
+  const decoder = new TextDecoder();
+  return contents.names.filter((raw) => {
+    const name = decoder.decode(raw).toLowerCase();
+    return name.startsWith(DOCX_MEDIA_FOLDER) && !name.endsWith("/");
+  }).length;
+}
+
 /**
  * The XML parts of a DOCX, inflated under the limits before the Word parser
- * sees anything. Too many entries, too much XML or too many bytes in all is
- * "too long or too complex"; an entry whose real size is not its declared size
- * is a damaged archive, whichever way it lies; anything else is unreadable.
+ * sees anything, and the names of all its entries. Too many entries, too much
+ * XML or too many bytes in all is "too long or too complex"; an entry whose
+ * real size is not its declared size is a damaged archive, whichever way it
+ * lies; anything else is unreadable.
  */
-export function docxParts(bytes: Uint8Array, limits: ZipLimits = DOCX_LIMITS): ZipPart[] {
+export function docxParts(bytes: Uint8Array, limits: ZipLimits = DOCX_LIMITS): ZipContents {
   try {
     return readZipParts(bytes, limits);
   } catch (error) {
@@ -123,14 +192,16 @@ export function docxParts(bytes: Uint8Array, limits: ZipLimits = DOCX_LIMITS): Z
 
 /**
  * The Word parser is only ever given an archive rebuilt from the checked XML
- * parts, so it cannot inflate or parse more than `maxDocxMarkupBytes`.
+ * parts, so it cannot inflate or parse more than `maxDocxMarkupBytes`. The
+ * pictures are counted from the same checked walk of the archive.
  */
 async function docxReader(): Promise<TextReader> {
   const mammoth = (await import("mammoth")).default;
   return async (bytes) => {
-    const checked = storedZip(docxParts(bytes));
+    const contents = docxParts(bytes);
+    const checked = storedZip(contents.parts);
     const { value } = await mammoth.extractRawText({ buffer: Buffer.from(checked) });
-    return value;
+    return { text: value, imageCount: docxImageCount(contents) };
   };
 }
 
@@ -141,7 +212,8 @@ export type ExtractOptions = {
 };
 
 /**
- * Plain text of a PDF or DOCX held in memory. No network call. Files over
+ * Plain text of a PDF or DOCX held in memory, and the number of pictures it
+ * holds (see `readPdfPages` and `docxImageCount`). No network call. Files over
  * the upload limit are refused, a PDF is read page by page against a deadline,
  * a DOCX is inflated under small caps and only its XML parts reach the parser,
  * and the whole read is abandoned after `extractTimeoutMs` whenever the parser
@@ -159,7 +231,7 @@ export async function extractText(
   bytes: Uint8Array,
   kind: ResumeKind,
   options: ExtractOptions = {},
-): Promise<string> {
+): Promise<Extracted> {
   if (bytes.byteLength > UPLOAD_LIMITS.maxBytes) throw fail("too_large");
 
   let read: TextReader;
@@ -178,7 +250,8 @@ export async function extractText(
   try {
     const work = read(bytes, Date.now() + timeoutMs);
     work.catch(() => undefined);
-    return normalizeText(await Promise.race([work, timeout]));
+    const { text, imageCount } = await Promise.race([work, timeout]);
+    return { text: normalizeText(text), imageCount };
   } catch (error) {
     if (error instanceof ExtractionError) throw error;
     throw fail("unreadable", error);

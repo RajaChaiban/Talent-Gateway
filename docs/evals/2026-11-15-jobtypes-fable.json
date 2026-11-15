@@ -1,0 +1,292 @@
+{
+  "model": "anthropic/claude-fable-5.2",
+  "standIn": false,
+  "promptVersion": "2d2468ff",
+  "date": "2026-11-15",
+  "label": "jobtypes-fable",
+  "tests": [
+    8
+  ],
+  "costUsd": 1.304248,
+  "medianSeconds": 16.27,
+  "calls": 25,
+  "cases": {
+    "jt-swe-strong": {
+      "test": 8,
+      "job": "software-engineer",
+      "score": 95,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 3,
+        "evidence": 1,
+        "proofOfWork": 0.3,
+        "education": 0.2
+      }
+    },
+    "jt-swe-mid": {
+      "test": 8,
+      "job": "software-engineer",
+      "score": 77,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.5,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-swe-vague": {
+      "test": 8,
+      "job": "software-engineer",
+      "score": 65,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.3125,
+        "evidence": 0,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-swe-related": {
+      "test": 8,
+      "job": "software-engineer",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-swe-unrelated": {
+      "test": 8,
+      "job": "software-engineer",
+      "score": 0,
+      "roleMatch": "unrelated",
+      "parts": {
+        "start": 0,
+        "skills": 0,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0
+      }
+    },
+    "jt-finance-strong": {
+      "test": 8,
+      "job": "finance-manager",
+      "score": 92,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 3,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-finance-mid": {
+      "test": 8,
+      "job": "finance-manager",
+      "score": 77,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.5,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-finance-vague": {
+      "test": 8,
+      "job": "finance-manager",
+      "score": 66,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.3928571428571428,
+        "evidence": 0,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-finance-related": {
+      "test": 8,
+      "job": "finance-manager",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-finance-unrelated": {
+      "test": 8,
+      "job": "finance-manager",
+      "score": 6,
+      "roleMatch": "unrelated",
+      "parts": {
+        "start": 0.5,
+        "skills": 0,
+        "evidence": 1,
+        "proofOfWork": 0.3,
+        "education": 0
+      }
+    },
+    "jt-nurse-strong": {
+      "test": 8,
+      "job": "registered-nurse",
+      "score": 92,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 3,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-nurse-mid": {
+      "test": 8,
+      "job": "registered-nurse",
+      "score": 81,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.875,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-nurse-vague": {
+      "test": 8,
+      "job": "registered-nurse",
+      "score": 68,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.59375,
+        "evidence": 0,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-nurse-related": {
+      "test": 8,
+      "job": "registered-nurse",
+      "score": 34,
+      "roleMatch": "related",
+      "parts": {
+        "start": 2.5,
+        "skills": 0.75,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0
+      }
+    },
+    "jt-nurse-unrelated": {
+      "test": 8,
+      "job": "registered-nurse",
+      "score": 0,
+      "roleMatch": "unrelated",
+      "parts": {
+        "start": 0,
+        "skills": 0,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0
+      }
+    },
+    "jt-marketing-strong": {
+      "test": 8,
+      "job": "marketing-manager",
+      "score": 92,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 3,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-marketing-mid": {
+      "test": 8,
+      "job": "marketing-manager",
+      "score": 79,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.7142857142857142,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-marketing-vague": {
+      "test": 8,
+      "job": "marketing-manager",
+      "score": 66,
+      "roleMatch": "same",
+      "parts": {
+        "start": 5,
+        "skills": 1.3928571428571428,
+        "evidence": 0,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-marketing-related": {
+      "test": 8,
+      "job": "marketing-manager",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-marketing-unrelated": {
+      "test": 8,
+      "job": "marketing-manager",
+      "score": 7,
+      "roleMatch": "unrelated",
+      "parts": {
+        "start": 0.5,
+        "skills": 0.42857142857142855,
+        "evidence": 1,
+        "proofOfWork": 0,
+        "education": 0.2
+      }
+    },
+    "jt-sales-strong": {
+      "test": 8,
+      "job": "account-executive",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-sales-mid": {
+      "test": 8,
+      "job": "account-executive",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-sales-vague": {
+      "test": 8,
+      "job": "account-executive",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-sales-related": {
+      "test": 8,
+      "job": "account-executive",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    },
+    "jt-sales-unrelated": {
+      "test": 8,
+      "job": "account-executive",
+      "score": null,
+      "roleMatch": null,
+      "parts": null
+    }
+  }
+}

@@ -155,6 +155,7 @@ export type Database = {
           extracted_text: string | null
           file_name: string
           id: string
+          image_count: number | null
           job_id: string
           run_id: string | null
           status: string
@@ -169,6 +170,7 @@ export type Database = {
           extracted_text?: string | null
           file_name: string
           id?: string
+          image_count?: number | null
           job_id: string
           run_id?: string | null
           status?: string
@@ -183,6 +185,7 @@ export type Database = {
           extracted_text?: string | null
           file_name?: string
           id?: string
+          image_count?: number | null
           job_id?: string
           run_id?: string | null
           status?: string

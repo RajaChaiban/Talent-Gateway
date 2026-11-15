@@ -1,4 +1,6 @@
 import { MockLanguageModelV4 } from "ai/test";
+import { fakeScoreParts } from "@/lib/ai/fake-model";
+import { asStored } from "@/lib/score";
 
 export type CallOptions = MockLanguageModelV4["doGenerateCalls"][number];
 type GenerateResult = Awaited<ReturnType<MockLanguageModelV4["doGenerate"]>>;
@@ -28,13 +30,21 @@ export function messageText(options: CallOptions, role: "system" | "user"): stri
     .join("\n");
 }
 
-export const SCORE_ANSWER = {
-  full_name: "Ada Lovelace",
-  match_score: 83,
-  match_summary: "Strong backend match.",
-  strengths: ["Built APIs in TypeScript."],
-  gaps: ["No Kubernetes."],
-};
+/** The stored total of SCORE_ANSWER once its parts are added up. */
+export const SCORE_TOTAL = 83;
+
+/** A scoring answer whose parts add up to `stored` tenths; the other fields are SCORE_ANSWER's. */
+export function scoreAnswer(stored: number) {
+  return {
+    full_name: "Ada Lovelace",
+    ...fakeScoreParts(asStored(stored)),
+    match_summary: "Strong backend match.",
+    strengths: ["Built APIs in TypeScript."],
+    gaps: ["No Kubernetes."],
+  };
+}
+
+export const SCORE_ANSWER = scoreAnswer(SCORE_TOTAL);
 
 export const RADAR_ANSWER = {
   copycat: { flagged: false, note: "" },

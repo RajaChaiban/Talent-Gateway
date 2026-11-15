@@ -55,6 +55,7 @@ export function seedResume(db: FakeDb, jobId: string, over: Row = {}): Row {
     storage_path: `${jobId}/${id}/resume.pdf`,
     status: "extracted",
     extracted_text: READY_TEXT,
+    image_count: 0,
     ...over,
   });
 }

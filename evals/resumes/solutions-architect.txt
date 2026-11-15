@@ -1,0 +1,29 @@
+Daniel Reyes
+Solutions Architect
+daniel.reyes@example.com
+(312) 555-0102
+Chicago, IL
+
+SUMMARY
+Solutions architect with 8 years in customer-facing technical roles, designing integrations and cloud deployments for enterprise customers of a software vendor.
+
+EXPERIENCE
+Senior Solutions Architect, Cobalt Data Systems, Chicago, IL
+2020 - Present
+- Designed integration architectures for 40 enterprise customers connecting their ERP and CRM systems to our data platform.
+- Ran technical discovery and proof-of-concept projects in the sales cycle, supporting $12 million in closed contracts.
+- Wrote reference architectures and deployment guides for AWS and Azure.
+- Built small demo applications and integration scripts in Python and JavaScript to show customers how the API works.
+- Trained partner engineers on the platform in quarterly workshops.
+
+Solutions Engineer, Meridian Software, Chicago, IL
+2016 - 2020
+- Delivered product demos and answered technical questions in security and architecture reviews.
+- Wrote SQL queries against customer data warehouses to scope migration projects.
+- Built a library of reusable REST API examples for the sales engineering team.
+
+SKILLS
+Solution design, AWS, Azure, REST APIs, Python, JavaScript, SQL, technical presentations, requirements gathering
+
+EDUCATION
+B.S. Information Systems, Prairie Valley University, 2016

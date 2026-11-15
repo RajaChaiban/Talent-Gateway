@@ -55,9 +55,11 @@ export const JOB_THRESHOLD_DEFAULTS = {
 export type AtsCheckId =
   | "readable_text"
   | "contact_info"
+  | "phone"
   | "standard_sections"
   | "layout_noise"
-  | "file";
+  | "file"
+  | "picture";
 
 export interface AtsConfig {
   /** Fewer characters than this after collapsing whitespace fails readable_text. */
@@ -82,6 +84,8 @@ export interface AtsConfig {
   readonly contentTypeLabels: Readonly<Record<string, string>>;
   /** A larger file fails the file check. */
   readonly maxFileBytes: number;
+  /** More pictures than this in the file fails the picture check; an uncounted file passes. */
+  readonly maxImages: number;
   /** Points each passed check adds to the score; the weights are not negative and sum to 100. */
   readonly weights: Readonly<Record<AtsCheckId, number>>;
   /** Checks that must pass for ATS_READY whatever the score. */
@@ -185,17 +189,22 @@ export const ATS_CONFIG: AtsConfig = deepFreeze({
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Word (DOCX)",
   },
   maxFileBytes: UPLOAD_LIMITS.maxBytes,
+  maxImages: 0,
   weights: {
-    readable_text: 22,
-    file: 15,
-    contact_info: 21,
-    standard_sections: 21,
-    layout_noise: 21,
+    readable_text: 15,
+    file: 5,
+    contact_info: 15,
+    phone: 10,
+    picture: 10,
+    standard_sections: 25,
+    layout_noise: 20,
   },
   required: {
     readable_text: true,
     file: true,
-    contact_info: false,
+    contact_info: true,
+    phone: true,
+    picture: true,
     standard_sections: false,
     layout_noise: false,
   },
@@ -255,6 +264,34 @@ export const SCREENING_AI_LIMITS = {
   summaryMaxChars: 600,
   radarNoteMaxChars: 200,
   fullNameMaxChars: 120,
+  /** The model lists one item per must-have of the job description: at least 1, at most mustHavesMax. */
+  mustHavesMax: 12,
+  mustHaveMaxChars: 120,
+} as const;
+
+/**
+ * How a match score is added up from the parts the scoring model returns
+ * (`totalScore` in src/lib/ai/total-score.ts). Every number is on the 0 to 10
+ * scale. The model classifies and gives part-scores; the code adds them up.
+ *
+ * total = start + (skills + evidence + proofOfWork + education) x start / 5,
+ * so a resume whose most recent title is the job's role starts at 5.0 and can
+ * reach 10.0, and one that starts lower earns the additions in proportion.
+ */
+export const SCORE_WEIGHTS = {
+  /** The start score by role match: exactly `same`, or the model's value clamped to the range. */
+  start: {
+    same: 5,
+    related: { min: 2.5, max: 4 },
+    unrelated: { min: 0, max: 1.5 },
+  },
+  /** The skills part when every must-have is shown. */
+  skillsMax: 3,
+  /** The share of a must-have's skills points, by its status. */
+  mustHaveStatus: { shown: 1, equivalent: 0.5, listed: 0.25, missing: 0 },
+  evidenceMax: 1,
+  proofOfWorkMax: 0.6,
+  educationMax: 0.4,
 } as const;
 
 /** Inviting a candidate to interview. */

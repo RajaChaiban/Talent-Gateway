@@ -1,0 +1,28 @@
+James Whitfield
+Software Engineer
+james.whitfield@example.com
+(720) 555-0110
+Denver, CO
+
+SUMMARY
+Software engineer with 4 years building web applications.
+
+EXPERIENCE
+Software Engineer, Ridgeway Health Software, Denver, CO
+2022 - Present
+- Built patient scheduling screens in Angular and TypeScript used by 200 clinics, replacing a paper booking form.
+- Wrote Java (Spring Boot) API endpoints for appointments and reminders, with unit tests in JUnit.
+- Added indexes and rewrote two Oracle queries behind the clinic calendar, taking its load time from 3 s to 600 ms.
+- Built an agent loop with Claude Code that runs the test suite and opens a fix for each failure, cutting test triage time by 40%.
+- Added a test step to the team's GitHub Actions pipeline so a pull request cannot merge with failing tests.
+
+Junior Developer, Pinecrest Digital Agency, Boulder, CO
+2021 - 2022
+- Built marketing websites and small Angular components for client projects.
+- Fixed bugs reported by clients and wrote release notes.
+
+SKILLS
+TypeScript, JavaScript, Angular, Java, Spring Boot, Oracle, SQL, JUnit, GitHub Actions, Git
+
+EDUCATION
+B.S. Computer Science, Front Range University, 2021

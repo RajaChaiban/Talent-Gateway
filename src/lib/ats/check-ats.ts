@@ -1,6 +1,7 @@
 import { ATS_CONFIG, type AtsCheckId, type AtsConfig } from "@/lib/config";
 import { countEmails } from "./email";
 import { findSections } from "./headings";
+import { findPhoneNumbers } from "./phone";
 import { reasonFor, type Measured } from "./reasons";
 import { scanText } from "./text-scan";
 import type { AtsInput, AtsResult, CheckResult } from "./types";
@@ -19,7 +20,8 @@ function isSupportedType(contentType: string, config: AtsConfig): boolean {
 }
 
 /**
- * Decides whether a resume is readable enough to send to the AI. Pure: no I/O, no clock,
+ * Decides whether a resume is readable enough to send to the AI. Email, phone number and
+ * no picture are required: a resume missing one is set aside whatever its score. Pure: no I/O, no clock,
  * and every threshold and weight comes from `config`, which is validated first (an invalid
  * config throws an error naming the field). Every check always runs.
  *
@@ -46,6 +48,12 @@ export function checkAts(input: AtsInput, config: AtsConfig = ATS_CONFIG): AtsRe
   const sizeKnown =
     typeof input.sizeBytes === "number" && Number.isFinite(input.sizeBytes) && input.sizeBytes >= 0;
   const acceptableSize = sizeKnown && input.sizeBytes <= config.maxFileBytes;
+  const phones = findPhoneNumbers(text).length;
+  // Anything but a count (null from a row saved before pictures were counted) is "not counted".
+  const imageCount =
+    typeof input.imageCount === "number" && Number.isFinite(input.imageCount) && input.imageCount >= 0
+      ? input.imageCount
+      : 0;
 
   const measured: Measured = {
     readableChars: scan.readableChars,
@@ -57,14 +65,17 @@ export function checkAts(input: AtsInput, config: AtsConfig = ATS_CONFIG): AtsRe
     sizeKnown,
     sizeBytes: input.sizeBytes,
     acceptableSize,
+    imageCount,
   };
 
   const outcomes: Array<[AtsCheckId, boolean, number]> = [
     ["readable_text", !textMissing && scan.readableChars >= config.minTextChars, scan.readableChars],
     ["contact_info", emails > 0, emails],
+    ["phone", phones > 0, phones],
     ["standard_sections", sections.length >= config.minSections, sections.length],
     ["layout_noise", ratio <= config.maxSymbolRatio, ratio],
     ["file", supportedType && acceptableSize, sizeKnown ? input.sizeBytes : 0],
+    ["picture", imageCount <= config.maxImages, imageCount],
   ];
   const checks: CheckResult[] = outcomes.map(([id, passed, value]) => ({
     id,

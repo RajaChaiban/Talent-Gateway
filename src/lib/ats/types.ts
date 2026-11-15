@@ -8,6 +8,8 @@ export type AtsInput = {
   /** MIME type of the uploaded file; parameters such as "; charset=" are ignored. */
   contentType: string;
   sizeBytes: number;
+  /** Pictures counted in the file when its text was extracted; null when it was not counted, which passes the picture check. */
+  imageCount: number | null;
 };
 
 export type CheckResult = {
@@ -19,8 +21,8 @@ export type CheckResult = {
   required: boolean;
   /**
    * What was measured: characters read (readable_text), emails found (contact_info),
-   * sections found (standard_sections), symbol share 0 to 1 (layout_noise),
-   * file size in bytes (file).
+   * phone numbers found (phone), sections found (standard_sections), symbol share 0 to 1
+   * (layout_noise), file size in bytes (file), pictures counted (picture; 0 when not counted).
    */
   value: number;
 };
@@ -31,6 +33,6 @@ export type AtsResult = {
   score: number;
   /** One sentence per failed check, in the order of the checks; empty when all pass. */
   reasons: string[];
-  /** All five checks, always in the same order. */
+  /** All seven checks, always in the same order. */
   checks: CheckResult[];
 };

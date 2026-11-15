@@ -1,0 +1,30 @@
+Maya Okafor
+Senior Software Engineer
+maya.okafor@example.com
+(206) 555-0101
+Seattle, WA
+
+SUMMARY
+Passionate, results-driven software engineer with a proven track record of delivering innovative, scalable solutions in fast-paced environments.
+
+EXPERIENCE
+Senior Software Engineer, Brightline Commerce, Seattle, WA
+2021 - Present
+- Drove the modernisation of key customer-facing experiences.
+- Leveraged best-in-class technologies to deliver robust, scalable back-end solutions.
+- Championed data excellence and helped improve database performance.
+- Spearheaded DevOps initiatives and helped with deployments.
+- Used AI to boost team productivity.
+- Mentored team members and fostered a culture of quality.
+
+Software Engineer, Fernway Travel, Portland, OR
+2018 - 2021
+- Worked on booking features for a busy travel site.
+- Helped with testing and quality improvements.
+- Supported the modernisation of back-end processes.
+
+SKILLS
+TypeScript, JavaScript, React, Next.js, Node.js, Express, PostgreSQL, SQL, Jest, Vitest, Playwright, unit testing, integration testing, GitHub Actions, CI/CD, Docker, AWS
+
+EDUCATION
+B.S. Computer Science, Lakeshore State University, 2018

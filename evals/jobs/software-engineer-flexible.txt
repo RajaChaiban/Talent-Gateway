@@ -1,0 +1,28 @@
+Software Engineer, Product Platform
+Northwind Labs (a technology company building a web platform for small businesses)
+
+About the role
+You will build and run the web application our customers use every day, from the front end to the back-end services and the database behind it. You will own features end to end: design, code, tests, release and the follow-up in production.
+
+The specific stack does not matter to us. We care that you have built and run a production web application with a modern stack, not which frameworks you used. You will pick up ours on the job.
+
+Must have
+- 3 or more years of professional software engineering experience on a production web application.
+- A modern front-end framework, used in production.
+- A back-end language and framework for services and APIs.
+- A relational database: schema design, writing and tuning SQL queries.
+- Automated testing: unit and integration tests as part of your normal work.
+- CI/CD: you have set up or maintained build and deployment pipelines.
+- A bachelor's degree in computer science, software engineering or a related field.
+
+Nice to have
+- A master's degree in computer science or a related field.
+- Public work samples, such as a code repository.
+- Experience using AI coding tools in your development workflow.
+- Cloud infrastructure experience.
+
+What you will do
+- Ship features across the front end and the back-end API.
+- Design database schemas and keep queries fast.
+- Write tests and keep the CI/CD pipeline green and fast.
+- Review code and help other engineers.

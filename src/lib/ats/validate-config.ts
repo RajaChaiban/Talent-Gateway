@@ -3,9 +3,11 @@ import type { AtsCheckId, AtsConfig } from "@/lib/config";
 export const CHECK_IDS: readonly AtsCheckId[] = [
   "readable_text",
   "contact_info",
+  "phone",
   "standard_sections",
   "layout_noise",
   "file",
+  "picture",
 ];
 
 const WEIGHT_TOTAL = 100;
@@ -39,6 +41,8 @@ export function assertValidConfig(config: AtsConfig): void {
   checkNumber(config.maxHeadingChars, "maxHeadingChars", 1, Number.MAX_SAFE_INTEGER);
   checkNumber(config.maxSymbolRatio, "maxSymbolRatio", 0, 1);
   checkNumber(config.maxFileBytes, "maxFileBytes", 0, Number.MAX_SAFE_INTEGER);
+  checkNumber(config.maxImages, "maxImages", 0, Number.MAX_SAFE_INTEGER);
+  if (!Number.isInteger(config.maxImages)) fail("maxImages", "must be a whole number");
   checkNumber(config.passScore, "passScore", 0, 100);
 
   if (!Array.isArray(config.requiredSections)) fail("requiredSections", "must be a list");

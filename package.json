@@ -10,7 +10,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "docs:check": "node scripts/check-backend-doc.mjs",
-    "design:contrast": "node scripts/check-contrast.mjs"
+    "design:contrast": "node scripts/check-contrast.mjs",
+    "eval": "node evals/launch.mjs run",
+    "eval:compare": "node evals/launch.mjs compare"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

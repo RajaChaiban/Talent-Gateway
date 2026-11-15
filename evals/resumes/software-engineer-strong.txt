@@ -1,0 +1,31 @@
+Maya Okafor
+Senior Software Engineer
+maya.okafor@example.com
+(206) 555-0101
+Seattle, WA
+Code repository: https://git.example.com/maya-okafor
+
+SUMMARY
+Software engineer with 7 years building production web applications in TypeScript, React, Node.js and PostgreSQL, owning features from design to release.
+
+EXPERIENCE
+Senior Software Engineer, Brightline Commerce, Seattle, WA
+2021 - Present
+- Led the rebuild of the merchant dashboard in React and TypeScript, used by 30,000 merchants; cut page load time from 4.1 s to 1.3 s.
+- Designed the PostgreSQL schema for the new invoicing service and rewrote its slowest queries, taking the p95 report query from 2.8 s to 180 ms.
+- Built the Node.js order API (Express, TypeScript) that handles 2 million requests a day, with integration tests against a real PostgreSQL database.
+- Set up the GitHub Actions CI/CD pipeline for 12 services: tests, type checks and preview deploys on every pull request, production deploys on merge; build time down from 25 to 8 minutes.
+- Built an agent loop with Claude Code that runs the test suite and opens a fix for each failure, cutting test triage time by 40%.
+- Mentored four engineers and ran the team's code review guidelines.
+
+Software Engineer, Fernway Travel, Portland, OR
+2018 - 2021
+- Built booking features in React and Node.js for a site with 1 million monthly visitors.
+- Wrote unit tests with Jest and end-to-end tests with Playwright; raised test coverage of the checkout from 35% to 85%.
+- Moved nightly batch jobs from cron scripts to a Node.js queue worker on PostgreSQL, removing a weekly manual restart.
+
+SKILLS
+TypeScript, JavaScript, React, Next.js, Node.js, Express, PostgreSQL, SQL, Jest, Vitest, Playwright, GitHub Actions, Docker, AWS
+
+EDUCATION
+B.S. Computer Science, Lakeshore State University, 2018

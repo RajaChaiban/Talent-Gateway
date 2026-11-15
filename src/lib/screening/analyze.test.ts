@@ -2,7 +2,7 @@ import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ModelBusyError } from "@/lib/ai/errors";
 import { FakeDb, type Row } from "../../../test/fake-supabase";
-import { messageText, SCORE_ANSWER } from "../../../test/mock-model";
+import { messageText, SCORE_ANSWER, SCORE_TOTAL, scoreAnswer } from "../../../test/mock-model";
 import {
   NOT_READY_TEXT,
   READY_TEXT,
@@ -70,6 +70,35 @@ describe("analyzeResume statuses", () => {
     expect(resumeRow(resume.id as string).ats_status).toBe("NOT_ATS_READY");
   });
 
+  it.each([
+    ["no email address", { extracted_text: READY_TEXT.replace("priya.natarajan@example.com", "email on request") }, /^No email address/],
+    ["no phone number", { extracted_text: READY_TEXT.replace("+44 20 7946 0000", "phone on request") }, /^No phone number/],
+    ["a picture", { image_count: 2 }, /^The file contains 2 pictures\./],
+  ])("sets aside an otherwise clean resume with %s, saying why, with zero model calls", async (_name, over, reason) => {
+    const resume = seedResume(db, job.id as string, over);
+    await expect(analyze(resume.id as string)).resolves.toBe("ats_failed");
+    const row = resumeRow(resume.id as string);
+    expect(row.ats_status).toBe("NOT_ATS_READY");
+    expect(row.ats_score as number).toBeGreaterThanOrEqual(60);
+    expect(row.ats_reasons).toEqual([expect.stringMatching(reason)]);
+    expect(model.count()).toBe(0);
+    expect(db.rows("candidates")).toHaveLength(0);
+  });
+
+  it("scores a resume with a picture once the recruiter overrides the gate", async () => {
+    const resume = seedResume(db, job.id as string, { image_count: 1, ats_override: true });
+    await expect(analyze(resume.id as string)).resolves.toBe("scored");
+    expect(model.count("score")).toBe(1);
+    expect(model.count("radar")).toBe(1);
+    expect(resumeRow(resume.id as string).ats_status).toBe("NOT_ATS_READY");
+  });
+
+  it("passes the picture check for a resume whose pictures were never counted", async () => {
+    const resume = seedResume(db, job.id as string, { image_count: null });
+    await expect(analyze(resume.id as string)).resolves.toBe("scored");
+    expect(resumeRow(resume.id as string)).toMatchObject({ ats_status: "ATS_READY", ats_score: 100 });
+  });
+
   it("scores an ATS-ready resume and saves the candidate with stored tenths", async () => {
     const resume = seedResume(db, job.id as string);
     await expect(analyze(resume.id as string)).resolves.toBe("scored");
@@ -79,7 +108,7 @@ describe("analyzeResume statuses", () => {
         job_id: job.id,
         resume_id: resume.id,
         full_name: SCORE_ANSWER.full_name,
-        match_score: SCORE_ANSWER.match_score,
+        match_score: SCORE_TOTAL,
         match_summary: SCORE_ANSWER.match_summary,
         strengths: SCORE_ANSWER.strengths,
         gaps: SCORE_ANSWER.gaps,
@@ -124,14 +153,14 @@ describe("analyzeResume statuses", () => {
 describe("analyzeResume model failures", () => {
   it("retries a bad answer once and then scores", async () => {
     let tries = 0;
-    model.score = () => (tries++ === 0 ? { ...SCORE_ANSWER, match_score: 8.3 } : SCORE_ANSWER);
+    model.score = () => (tries++ === 0 ? { ...SCORE_ANSWER, start_score: 8.3 } : SCORE_ANSWER);
     const resume = seedResume(db, job.id as string);
     await expect(analyze(resume.id as string)).resolves.toBe("scored");
     expect(model.count("score")).toBe(2);
   });
 
   it("marks the resume failed after two bad answers, saves nothing half-formed and logs once without resume text", async () => {
-    model.score = () => ({ ...SCORE_ANSWER, match_score: 150 });
+    model.score = () => ({ ...SCORE_ANSWER, evidence: 15 });
     const resume = seedResume(db, job.id as string);
     await expect(analyze(resume.id as string)).resolves.toBe("failed");
     expect(model.count("score")).toBe(2);
@@ -188,7 +217,7 @@ describe("analyzeResume candidate row", () => {
   async function scoreWith(threshold: number, score: number) {
     db = new FakeDb();
     job = seedJob(db, { invite_threshold: threshold });
-    model.score = () => ({ ...SCORE_ANSWER, match_score: score });
+    model.score = () => scoreAnswer(score);
     const resume = seedResume(db, job.id as string);
     await analyze(resume.id as string);
     return db.rows("candidates")[0];
@@ -251,7 +280,7 @@ describe("analyzeResume idempotence", () => {
   it("the losing call returns the winner's candidate even when the two scores differ", async () => {
     model.delayMs = 10;
     let n = 0;
-    model.score = () => ({ ...SCORE_ANSWER, match_score: n++ === 0 ? 90 : 40 });
+    model.score = () => scoreAnswer(n++ === 0 ? 90 : 40);
     const resume = seedResume(db, job.id as string);
     await Promise.all([analyze(resume.id as string), analyze(resume.id as string)]);
     expect(db.rows("candidates")).toHaveLength(1);

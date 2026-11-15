@@ -64,8 +64,13 @@ export async function completeUpload(
   if (declared && declared !== kind) return failure(MISTYPED_MESSAGE[kind]);
 
   try {
-    const text = await extractText(bytes, kind);
-    if (!(await completeResume(supabase, resume.id, { status: "extracted", extractedText: text }))) {
+    const { text, imageCount } = await extractText(bytes, kind);
+    const saved = await completeResume(supabase, resume.id, {
+      status: "extracted",
+      extractedText: text,
+      imageCount,
+    });
+    if (!saved) {
       return { state: "gone" };
     }
     return { state: "done", status: "extracted", characters: text.length };
