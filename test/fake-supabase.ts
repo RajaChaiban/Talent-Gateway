@@ -8,8 +8,8 @@ import { randomUUID } from "node:crypto";
  * 23505 (or nothing, for an upsert that ignores duplicates).
  *
  * Supported: select (column list), insert, update, upsert (onConflict,
- * ignoreDuplicates), eq, neq, in, not(column, "is", null), order, limit, single,
- * maybeSingle. Anything else throws, so a test never passes on a silently
+ * ignoreDuplicates), eq, neq, in, is(column, null), not(column, "is", null),
+ * order, limit, single, maybeSingle. Anything else throws, so a test never passes on a silently
  * ignored filter.
  */
 
@@ -21,6 +21,7 @@ const UNIQUE: Readonly<Record<string, readonly (readonly string[])[]>> = {
   jobs: [["id"]],
   resumes: [["id"], ["storage_path"], ["id", "job_id"]],
   candidates: [["id"], ["job_id", "resume_id"], ["resume_id"]],
+  invitations: [["id"], ["candidate_id"]],
 };
 
 let clock = Date.parse("2026-11-01T00:00:00Z");
@@ -40,6 +41,7 @@ const DEFAULTS: Readonly<Record<string, () => Row>> = {
     ats_override: false,
   }),
   candidates: () => ({ email: null, invite_status: "NONE", strengths: [], gaps: [], radar_results: {} }),
+  invitations: () => ({ sent_at: null, message_id: null, error: null }),
 };
 
 export type Call = { table: string; op: Op };
@@ -49,6 +51,7 @@ export class FakeDb {
     jobs: [],
     resumes: [],
     candidates: [],
+    invitations: [],
   };
   readonly calls: Call[] = [];
   /** Return a code to make the matching statement fail with that Postgres error code. */
@@ -150,6 +153,12 @@ class FakeQuery {
 
   in(column: string, values: readonly unknown[]) {
     this.filters.push((row) => values.includes(row[column]));
+    return this;
+  }
+
+  is(column: string, value: unknown) {
+    if (value !== null) throw new Error("FakeDb: only is(column, null)");
+    this.filters.push((row) => row[column] === null || row[column] === undefined);
     return this;
   }
 

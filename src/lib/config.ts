@@ -257,6 +257,20 @@ export const SCREENING_AI_LIMITS = {
   fullNameMaxChars: 120,
 } as const;
 
+/** Inviting a candidate to interview. */
+export const INVITE_LIMITS = {
+  /**
+   * An invitation approved this long ago that is neither sent nor failed is
+   * taken as a send that died part-way, and "Try again" may claim it.
+   *
+   * DECISION: the send runs inside the request (`maxDuration` 30 s), so after
+   * 2 minutes no request can still be sending. A durable workflow would resume
+   * the send by itself; this rule trades that for no extra infrastructure, at
+   * the cost of a recruiter waiting up to 2 minutes and clicking again.
+   */
+  staleApprovalMs: 2 * 60_000,
+} as const;
+
 /** The browser's Analyze queue. */
 export const ANALYZE_QUEUE_LIMITS = {
   /** Per-resume analyze calls in flight at once. */

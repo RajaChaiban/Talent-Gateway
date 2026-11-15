@@ -1,5 +1,6 @@
 import { RADAR_FLAGS } from "@/lib/jobs/radar";
 import type { RankedCandidate } from "@/lib/jobs/types";
+import { InvitePanel } from "./invite-panel";
 
 function BulletList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
   return (
@@ -18,8 +19,14 @@ function BulletList({ title, items, empty }: { title: string; items: string[]; e
   );
 }
 
-/** The expanded part of a candidate row: summary, strengths, gaps, every Radar note and the resume file. */
-export function CandidateDetail({ candidate }: { candidate: RankedCandidate }) {
+/** The expanded part of a candidate row: summary, strengths, gaps, every Radar note, the invitation and the resume file. */
+export function CandidateDetail({
+  candidate,
+  jobTitle,
+}: {
+  candidate: RankedCandidate;
+  jobTitle: string;
+}) {
   const radarEntries = RADAR_FLAGS.flatMap(({ key, label }) => {
     const entry = candidate.radar_results[key];
     return entry ? [{ key, label, entry }] : [];
@@ -50,6 +57,10 @@ export function CandidateDetail({ candidate }: { candidate: RankedCandidate }) {
         ) : (
           <p className="text-copy-14 text-muted-foreground">No Radar results stored.</p>
         )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <h4 className="text-heading-14">Invitation</h4>
+        <InvitePanel candidate={candidate} jobTitle={jobTitle} />
       </div>
       <p className="text-copy-13 text-muted-foreground">
         Resume file: <span className="font-mono break-all">{candidate.resume_file_name}</span>

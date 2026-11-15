@@ -2,7 +2,7 @@ import type { ServerClient } from "@/lib/auth/verified-user";
 import { countResumes, rankCandidates, selectNotAtsReady, selectQueued } from "./helpers";
 import type { CreateJobInput, UpdateThresholdsInput } from "./schemas";
 import {
-  asCandidate,
+  asCandidateWithInvitation,
   asJob,
   asJobListItem,
   asResumesForFilter,
@@ -57,6 +57,9 @@ export async function getJob(supabase: Client, id: string): Promise<Job | null> 
   return data ? asJob(data) : null;
 }
 
+/** Each candidate with its invitation, embedded through `invitations.candidate_id` (unique, so one object or null). */
+const JOB_PAGE_CANDIDATE_COLUMNS = "*, invitations(sent_to, sent_at, approved_at)";
+
 const JOB_PAGE_RESUME_COLUMNS =
   "id, file_name, ats_score, ats_reasons, created_at, ats_status, ats_override";
 
@@ -66,7 +69,7 @@ export async function getJobPage(supabase: Client, id: string): Promise<JobPage 
   if (!job) return null;
 
   const [candidates, resumes] = await Promise.all([
-    supabase.from("candidates").select().eq("job_id", id),
+    supabase.from("candidates").select(JOB_PAGE_CANDIDATE_COLUMNS).eq("job_id", id),
     supabase
       .from("resumes")
       .select(JOB_PAGE_RESUME_COLUMNS)
@@ -79,7 +82,7 @@ export async function getJobPage(supabase: Client, id: string): Promise<JobPage 
   }
 
   const resumeRows = asResumesForFilter(resumes.data);
-  const candidateRows = candidates.data.map(asCandidate);
+  const candidateRows = candidates.data.map(asCandidateWithInvitation);
   const scoredIds = new Set(candidateRows.map((candidate) => candidate.resume_id));
 
   return {

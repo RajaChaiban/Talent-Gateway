@@ -2,6 +2,7 @@ import type { StoredScore } from "@/lib/score";
 import { parseRadarResults } from "./radar";
 import type {
   Candidate,
+  CandidateWithInvitation,
   NotAtsReadyResume,
   QueuedResume,
   RankedCandidate,
@@ -78,16 +79,17 @@ export function countResumes(
   return counts;
 }
 
-/** Ranked candidates with radar parsed and the resume file name attached. */
+/** Ranked candidates with radar parsed and the resume file name and invitation attached. */
 export function rankCandidates(
-  rows: readonly Candidate[],
+  rows: readonly CandidateWithInvitation[],
   resumes: readonly ResumeForFilter[],
 ): RankedCandidate[] {
   const fileNames = new Map(resumes.map((resume) => [resume.id, resume.file_name]));
-  return sortCandidates(rows).map(({ radar_results, ...candidate }) => ({
+  return sortCandidates(rows).map(({ radar_results, invitations, ...candidate }) => ({
     ...candidate,
     radar_results: parseRadarResults(radar_results),
     resume_file_name: fileNames.get(candidate.resume_id) ?? "",
+    invitation: invitations,
   }));
 }
 

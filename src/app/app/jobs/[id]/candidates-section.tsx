@@ -27,6 +27,7 @@ type Props = {
   queued: QueuedResume[];
   counts: ResumeCounts;
   topTalent: StoredScore;
+  jobTitle: string;
 };
 
 /** Changes the query string without a navigation: no server round trip, no new history entry. */
@@ -47,6 +48,7 @@ export function CandidatesSection({
   queued,
   counts,
   topTalent,
+  jobTitle,
 }: Props) {
   const search = useSearchParams();
   const [tab, setTab] = useState<TabId>(() => tabSchema.parse(search.get("tab")));
@@ -168,6 +170,7 @@ export function CandidatesSection({
           <RankedList
             candidates={candidates}
             topTalent={topTalent}
+            jobTitle={jobTitle}
             openId={shownOpenId}
             onToggle={toggle}
           />

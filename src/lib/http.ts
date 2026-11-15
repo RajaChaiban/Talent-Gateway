@@ -9,6 +9,7 @@ export type ErrorCode =
   | "payload_too_large"
   | "storage_unavailable"
   | "model_busy"
+  | "email_failed"
   | "server_error";
 
 /**

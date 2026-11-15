@@ -2,7 +2,7 @@
 
 The data model for talent-gateway on Supabase Postgres: four tables, one storage bucket, a single demo tenant. How the server uses these tables is in [BACKEND.md](BACKEND.md).
 
-**Status: applied.** The hosted database matches this file. Three migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`, then `job_status`, which stores the state of a job's analysis run again. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The screening routes write the rest of the pipeline: `resumes.ats_status`, `ats_score` and `ats_reasons` (the ATS check), `resumes.ats_override` ("Score anyway"), `resumes.status` (`failed` when the analysis fails, back to `extracted` when it is retried), one `candidates` row per scored resume (always `invite_status = 'NONE'`, with `email` read from the resume), and `jobs.status` (the state of the analysis run). The job page reads the job's `candidates` rows (the ranked list, best match first, with `radar_results` checked flag by flag and a malformed flag shown as not flagged) and the resumes' ATS columns (the "Not ATS-ready" tab and the "Queued for scoring" list); it shows `jobs.status` as a badge, on the page and on the jobs list. `run_id` is left at its default and `invitations` is not written yet. The `scored` value of `resumes.status` is allowed by the check constraint but never written: a resume counts as scored when it has a `candidates` row.
+**Status: applied.** The hosted database matches this file. Three migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`, then `job_status`, which stores the state of a job's analysis run again. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The screening routes write the rest of the pipeline: `resumes.ats_status`, `ats_score` and `ats_reasons` (the ATS check), `resumes.ats_override` ("Score anyway"), `resumes.status` (`failed` when the analysis fails, back to `extracted` when it is retried), one `candidates` row per scored resume (always `invite_status = 'NONE'`, with `email` read from the resume), and `jobs.status` (the state of the analysis run). The invite route writes `invitations` (one row per invited candidate: `approved_by`, `approved_at`, `sent_to`, then `sent_at` and `message_id`, or `error`) and `candidates.invite_status` (`APPROVED`, then `SENT` or `FAILED`); it never changes `candidates.email`. The job page reads the job's `candidates` rows (the ranked list, best match first, with `radar_results` checked flag by flag and a malformed flag shown as not flagged, and each candidate's invitation embedded in the same query) and the resumes' ATS columns (the "Not ATS-ready" tab and the "Queued for scoring" list); it shows `jobs.status` as a badge, on the page and on the jobs list. `run_id` is left at its default. The `scored` value of `resumes.status` is allowed by the check constraint but never written: a resume counts as scored when it has a `candidates` row.
 
 Supabase plays the customer's existing system here: the system of record that the Vercel pieces connect to rather than replace.
 
@@ -143,14 +143,15 @@ stateDiagram-v2
   direction LR
   state "candidates.invite_status" as C {
     [*] --> NONE: scored, waiting for a recruiter
-    NONE --> APPROVED: recruiter clicks Invite
-    APPROVED --> SENT: email accepted by the provider
-    APPROVED --> FAILED: email failed after retries
-    FAILED --> APPROVED: recruiter clicks Invite again
+    NONE --> APPROVED: recruiter clicks Invite (invitation row inserted)
+    APPROVED --> SENT: email accepted by the send function
+    APPROVED --> FAILED: the send function failed
+    FAILED --> APPROVED: recruiter clicks Try again
+    APPROVED --> APPROVED: Try again on an approval over 2 minutes old
   }
 ```
 
-Nothing moves a candidate out of `NONE` except a recruiter's click. A score above the invite bar does not.
+Nothing moves a candidate out of `NONE` except a recruiter's click. A score above the invite bar does not. `SENT` is final: a row with `sent_at` is never sent again. An `APPROVED` row younger than 2 minutes is a send in progress and refuses another click; an older one is a send whose request died, and "Try again" claims the same row. Every retry reuses the one `invitations` row and may replace `sent_to`. The invitation row is written before `invite_status` at each step, so when the two disagree the row (`sent_at` set: sent; `error` set: failed; neither: approved) is what the app acts on.
 
 Derived values, computed in code and never stored:
 
