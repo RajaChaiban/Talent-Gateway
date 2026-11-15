@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LocalDate } from "@/components/jobs/local-date";
@@ -7,10 +7,11 @@ import { requireSignedInUser } from "@/lib/auth/require-signed-in-user";
 import { APP_NAME } from "@/lib/config";
 import { resumeCountLabel } from "@/lib/jobs/helpers";
 import { getJob } from "@/lib/jobs/queries";
-import { countResumes } from "@/lib/jobs/resume-count";
 import { jobIdSchema } from "@/lib/jobs/schemas";
+import { listResumes } from "@/lib/resumes/queries";
 import { ExpandableText } from "./expandable-text";
 import { JobThresholds } from "./job-thresholds";
+import { ResumesSection } from "./resumes-section";
 
 export const metadata: Metadata = {
   title: `Job · ${APP_NAME}`,
@@ -30,9 +31,9 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
   const id = jobIdSchema.safeParse(rawId);
   if (!id.success) notFound();
 
-  const [job, resumeCount] = await Promise.all([
+  const [job, resumes] = await Promise.all([
     getJob(supabase, id.data),
-    countResumes(supabase, id.data),
+    listResumes(supabase, id.data),
   ]);
   if (!job) notFound();
 
@@ -79,15 +80,10 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
             Resumes
           </h2>
           <span className="text-label-14 tabular-nums text-muted-foreground">
-            {resumeCountLabel(resumeCount)}
+            {resumeCountLabel(resumes.length)}
           </span>
         </div>
-        {resumeCount === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-border surface-subtle px-6 py-10 text-center">
-            <FileText className="mb-1 size-6 text-muted-foreground" aria-hidden />
-            <p className="text-label-14 text-muted-foreground">No resumes yet</p>
-          </div>
-        ) : null}
+        <ResumesSection key={job.id} jobId={job.id} resumes={resumes} />
       </section>
     </div>
   );

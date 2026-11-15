@@ -30,3 +30,20 @@ export const ok = (data: unknown): QueryResult => ({ data, error: null });
 export const failed: QueryResult = { data: null, error: { message: "db down" } };
 
 export const SIGNED_IN = { data: { user: { id: "user-1" } }, error: null };
+
+export type StorageResult = { data: unknown; error: unknown };
+
+/**
+ * A stand-in for `supabase.storage`: `from(bucket)` returns the same bucket
+ * api every time, so tests can assert on its calls.
+ */
+export function storageMock(results: Partial<Record<"download" | "remove" | "createSignedUploadUrl", StorageResult>> = {}) {
+  const bucket = {
+    download: vi.fn<(path: string) => Promise<StorageResult>>(async () => results.download ?? ok(null)),
+    remove: vi.fn<(paths: string[]) => Promise<StorageResult>>(async () => results.remove ?? ok([])),
+    createSignedUploadUrl: vi.fn<(path: string) => Promise<StorageResult>>(
+      async () => results.createSignedUploadUrl ?? ok(null),
+    ),
+  };
+  return { storage: { from: vi.fn(() => bucket) }, bucket };
+}

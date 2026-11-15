@@ -2,7 +2,7 @@
 
 The data model for talent-gateway on Supabase Postgres: four tables, one storage bucket, a single demo tenant. How the server uses these tables is in [BACKEND.md](BACKEND.md).
 
-**Status: applied.** The hosted database matches this file. Two migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`. The app reads `jobs` and a resume count per job (the list on `/app`) and inserts into `jobs` (the create-job form); the other tables are not written yet.
+**Status: applied.** The hosted database matches this file. Two migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The `ats_*` columns and `run_id` are left at their defaults; `candidates` and `invitations` are not written yet.
 
 Supabase plays the customer's existing system here: the system of record that the Vercel pieces connect to rather than replace.
 
@@ -176,7 +176,8 @@ If this becomes multi-tenant, add `owner_id` to `jobs` and scope every policy th
 | `resumes` | Private | `{job_id}/{resume_id}/{file_name}` | PDF or DOCX, 5 MB |
 
 - Uploads go browser → Storage with a signed upload URL; the file never passes through a Vercel function.
-- Reads happen on the server only.
+- Reads happen on the server only: `POST /api/resumes/[id]/complete` downloads the file once to extract its text.
+- Removing one resume (`DELETE /api/resumes/[id]`) deletes its object first, then its row, so a storage failure never leaves an object with no row.
 - `authenticated` may read and write objects in `resumes`; `anon` may not.
 - Deleting a job does not delete its files automatically; the delete route removes the objects first, then the rows.
 
