@@ -40,6 +40,7 @@ function storageFailure(operation: string, error: StorageFailureShape): Error {
 
 type Client = Pick<ServerClient, "from" | "storage">;
 
+/** How many resumes a job holds, counted in the database without reading the rows. The sign route compares it with the per-job cap. */
 export async function countResumes(
   supabase: Pick<ServerClient, "from">,
   jobId: string,
@@ -73,6 +74,7 @@ export async function listResumes(
   return data;
 }
 
+/** The values for a new pending row. `storagePath` is where the file will be uploaded. */
 export type NewResume = { id: string; jobId: string; fileName: string; storagePath: string };
 
 /** Postgres' unique-violation code: the id or the storage path is already taken. */
@@ -97,6 +99,7 @@ export async function createPendingResume(
   return "created";
 }
 
+/** One resume with its extracted text, or null when no row is visible to the caller (it is missing, or row-level security hides it). */
 export async function getResume(
   supabase: Pick<ServerClient, "from">,
   id: string,
@@ -110,6 +113,7 @@ export async function getResume(
   return data;
 }
 
+/** The outcome to save for a resume: the extracted text with its picture count, or just `failed`. */
 export type Completion =
   | { status: "extracted"; extractedText: string; imageCount: number | null }
   | { status: "failed" };
@@ -150,8 +154,32 @@ export async function downloadResumeFile(
   return new Uint8Array(await data.arrayBuffer());
 }
 
+/** How long a download link stays valid: long enough for the browser to follow the redirect, no longer. */
+export const DOWNLOAD_URL_SECONDS = 60;
+
+/**
+ * A short-lived link to the stored file that the browser saves under
+ * `fileName`, or null when the object is not there.
+ */
+export async function createSignedDownload(
+  supabase: Pick<ServerClient, "storage">,
+  storagePath: string,
+  fileName: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(RESUME_BUCKET)
+    .createSignedUrl(storagePath, DOWNLOAD_URL_SECONDS, { download: fileName });
+  if (error) {
+    if (isMissingObject(error)) return null;
+    throw storageFailure("create signed download", error);
+  }
+  return data.signedUrl;
+}
+
+/** A signed upload permission: the browser sends the file to `path` with `token`. */
 export type SignedUpload = { token: string; path: string };
 
+/** Asks storage for a signed upload token for `storagePath`, so the browser uploads straight to the bucket and not through the server. Throws when storage fails. */
 export async function createSignedUpload(
   supabase: Pick<ServerClient, "storage">,
   storagePath: string,

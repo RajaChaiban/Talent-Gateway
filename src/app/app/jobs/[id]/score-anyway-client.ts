@@ -11,9 +11,12 @@ const okSchema = z.object({
 });
 const errorSchema = z.object({ error: z.object({ message: z.string().trim().min(1) }) });
 
+/** Shown when the score-anyway request fails for a reason other than a busy model service. */
 export const SCORE_ANYWAY_FAILED_MESSAGE = "Could not score this resume. Try again in a moment.";
+/** Shown when the model service reports it is busy. */
 export const SCORE_ANYWAY_BUSY_MESSAGE = "The AI service is busy. Try again in a moment.";
 
+/** What the page should tell the recruiter after a score-anyway attempt, and whether to reload its data. */
 export type ScoreAnywayOutcome = {
   /** `done`: scored. `notice`: the page changed but the resume was not scored. `error`: nothing changed. */
   kind: "done" | "notice" | "error";

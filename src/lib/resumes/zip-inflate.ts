@@ -37,6 +37,7 @@ export class ZipMalformedError extends Error {
   }
 }
 
+/** The caps `readZipParts` enforces while it inflates an untrusted archive. */
 export type ZipLimits = {
   /** Most entries the directory may list. */
   entries: number;
@@ -46,6 +47,7 @@ export type ZipLimits = {
   totalBytes: number;
 };
 
+/** One inflated entry: its raw name bytes and its data. */
 export type ZipPart = { name: Uint8Array; data: Uint8Array };
 
 /** What a checked archive holds: its markup parts, and the raw name of every entry in directory order. */

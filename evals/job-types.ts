@@ -20,6 +20,7 @@ export const JOB_TYPE_JOBS: ReadonlyArray<{ job: JobId; short: string; name: str
   { job: "account-executive", short: "sales", name: "Account Executive" },
 ];
 
+/** The five resume kinds written for each job, in the order they are reported. */
 export const RESUME_KINDS: readonly ResumeKind[] = ["strong", "mid", "vague", "related", "unrelated"];
 
 /** The expected score range per kind, in stored tenths. */
@@ -55,10 +56,12 @@ export function jobTypeFile(job: JobId, kind: ResumeKind): string {
   return REUSED[job]?.[kind] ?? own(job, kind);
 }
 
+/** The case id of one job type's resume of one kind, for example `jt-swe-strong`. */
 export function jobTypeCaseId(short: string, kind: ResumeKind): string {
   return `jt-${short}-${kind}`;
 }
 
+/** Test 8's model cases: every job type crossed with every resume kind, each with its expected score range. */
 export const JOB_TYPE_CASES: readonly ModelCase[] = JOB_TYPE_JOBS.flatMap(({ job, short, name }) =>
   RESUME_KINDS.map(
     (kind): ModelCase => ({

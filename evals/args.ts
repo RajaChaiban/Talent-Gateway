@@ -1,12 +1,16 @@
 import { COMPARISON_PREFIX, slugLabel } from "./report";
 import { ALL_TESTS, type TestNumber } from "./types";
 
+/** Folder of labelled local PDF and DOCX files used when --files is not given. */
 export const DEFAULT_FILES_DIR = "Resume_test/dummy";
+/** Runs per stability case when --runs is not given. */
 export const DEFAULT_RUNS = 3;
+/** Run name used when --label is not given; it also names the report file. */
 export const DEFAULT_LABEL = "run";
 
 const VALUE_FLAGS: readonly string[] = ["--model", "--label", "--runs", "--files", "--only"];
 
+/** The parsed command line of `npm run eval`, with defaults filled in. */
 export type EvalArgs = {
   /** A gateway model slug for this run; null uses AI_MODELS.scoring. */
   model: string | null;
@@ -19,6 +23,7 @@ export type EvalArgs = {
   help: boolean;
 };
 
+/** The help text printed for --help and after an argument error. */
 export const USAGE = `Usage: npm run eval -- [--label <text>] [--model <provider/model>] [--runs <n>] [--files <dir>] [--only <n[,n...]>]
 
   --label <text>    names the run and its report file (default "${DEFAULT_LABEL}"), e.g. baseline
@@ -57,6 +62,7 @@ export function parseArgs(argv: readonly string[]): EvalArgs {
     if (value === undefined || value.startsWith("--")) throw new Error(`${flag} needs a value`);
     index += 1;
     if (flag === "--model") {
+      // A gateway slug is `provider/model`; the model part may carry a colon, for example a version tag.
       if (!/^[\w.-]+\/[\w.:-]+$/.test(value)) throw new Error(`--model must be a provider/model slug, got "${value}"`);
       args.model = value;
     } else if (flag === "--label") {

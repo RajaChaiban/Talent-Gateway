@@ -1,8 +1,11 @@
 "use client";
 
+// Error boundary for every page under /app: shows a message and a retry button when a page fails to load.
+
 import { RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+/** The recruiter area's error screen. `retry` asks Next.js to render the failed page again. */
 export default function RecruiterError({ retry }: { error: unknown; retry: () => void }) {
   return (
     <section

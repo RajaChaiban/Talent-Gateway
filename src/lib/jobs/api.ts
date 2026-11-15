@@ -2,12 +2,17 @@ import { jsonError } from "@/lib/http";
 import { logServerError } from "@/lib/log";
 import { JobsDataError } from "./queries";
 
+/** Message of the 400 response for a body that is not JSON. */
 export const INVALID_JSON_MESSAGE = "Request body must be valid JSON";
+/** Message of the 404 response for an unknown job. */
 export const NOT_FOUND_MESSAGE = "Job not found";
+/** Message of the 500 response. It never carries database details. */
 export const SERVER_ERROR_MESSAGE = "Something went wrong. Try again in a moment.";
 
+/** The parsed request body, or the 400 response to return. */
 export type JsonBody = { ok: true; value: unknown } | { ok: false; response: Response };
 
+/** Parses the request body as JSON. A body that is not valid JSON gives a ready 400 response instead of throwing. */
 export async function readJsonBody(request: Request): Promise<JsonBody> {
   try {
     return { ok: true, value: await request.json() };
@@ -19,6 +24,7 @@ export async function readJsonBody(request: Request): Promise<JsonBody> {
   }
 }
 
+/** The 404 response for a job that does not exist or is not visible to the recruiter. */
 export function notFoundResponse(): Response {
   return jsonError("not_found", NOT_FOUND_MESSAGE, 404);
 }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { jobIdSchema, resumeIdSchema } from "@/lib/jobs/schemas";
 import { DOCX_MIME, isAllowedMimeType, PDF_MIME } from "./files";
 
+/** The most characters a cleaned file name may have. */
 export const FILE_NAME_MAX = 255;
 
 /** More than this is refused before any cleaning, so a huge name cannot cost work. */
@@ -71,4 +72,5 @@ export const signBodySchema = z
     }
   });
 
+/** The checked body of the sign route, with the file name already cleaned. */
 export type SignBody = z.infer<typeof signBodySchema>;

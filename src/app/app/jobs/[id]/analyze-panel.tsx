@@ -15,6 +15,7 @@ import {
 import { createAnalyzeQueue } from "@/lib/screening/analyze-queue";
 import { createThrottle } from "@/lib/screening/throttle";
 
+/** Where an analysis run is: not started, in progress, done, or stopped by an error. */
 export type Phase = "idle" | "running" | "finished" | "error";
 
 type Engine = {
@@ -81,6 +82,7 @@ function Outcome({ failed, progress }: { failed: number; progress: JobProgress |
   );
 }
 
+/** The panel's display state, passed in so the view has no behaviour of its own. */
 export type AnalyzePanelViewProps = {
   /** Resumes that need work: what Analyze would send. */
   pending: number;

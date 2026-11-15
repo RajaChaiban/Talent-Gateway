@@ -1,3 +1,5 @@
+// Root layout: loads the fonts and global styles around every page.
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/config";
@@ -13,11 +15,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/** Site-wide default title and description. */
 export const metadata: Metadata = {
   title: APP_NAME,
   description: APP_DESCRIPTION,
 };
 
+/** The html and body shell of the whole app. */
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html

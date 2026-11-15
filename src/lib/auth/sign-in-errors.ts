@@ -1,6 +1,9 @@
+/** Shown for any rejected email and password pair. The text is the same for a wrong email and a wrong password. */
 export const INVALID_CREDENTIALS_MESSAGE = "Email or password is incorrect";
+/** Shown when Supabase answers that there were too many sign-in attempts. */
 export const RATE_LIMITED_MESSAGE =
   "Too many sign-in attempts. Wait a minute and try again.";
+/** Shown when Supabase Auth could not be reached or failed on its side. */
 export const UNAVAILABLE_MESSAGE =
   "Sign-in is unavailable right now. Try again in a moment.";
 

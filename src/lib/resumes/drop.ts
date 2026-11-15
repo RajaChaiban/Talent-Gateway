@@ -10,7 +10,9 @@ import {
 
 type FileLike = { name: string; type: string; size: number };
 
+/** A dropped file that passed every check, with the content type to upload it as. */
 export type AcceptedFile<T extends FileLike> = { file: T; contentType: string };
+/** A dropped file that was refused, with the message to show beside its name. */
 export type RejectedFile = { name: string; reason: string };
 
 /** What a browser reports when it does not know a file's type. */

@@ -1,5 +1,6 @@
 import type { ApiResult } from "./client-api";
 
+/** Whether the row leaves the screen. When it stays, `message` says why. */
 export type RemovalVerdict = { removed: true } | { removed: false; message: string };
 
 /**

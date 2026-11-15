@@ -1,5 +1,6 @@
 import { RADAR_FLAGS } from "@/lib/jobs/radar";
 import type { RankedCandidate } from "@/lib/jobs/types";
+import { resumeFileHref } from "@/lib/resumes/saved-status";
 import { InvitePanel } from "./invite-panel";
 
 function BulletList({ title, items, empty }: { title: string; items: string[]; empty: string }) {
@@ -23,9 +24,14 @@ function BulletList({ title, items, empty }: { title: string; items: string[]; e
 export function CandidateDetail({
   candidate,
   jobTitle,
+  focusInvite = false,
+  onInviteFocused,
 }: {
   candidate: RankedCandidate;
   jobTitle: string;
+  /** Move focus to the invitation's email field (the row's invite shortcut was used). */
+  focusInvite?: boolean;
+  onInviteFocused?: () => void;
 }) {
   const radarEntries = RADAR_FLAGS.flatMap(({ key, label }) => {
     const entry = candidate.radar_results[key];
@@ -60,10 +66,22 @@ export function CandidateDetail({
       </div>
       <div className="flex flex-col gap-2">
         <h4 className="text-heading-14">Invitation</h4>
-        <InvitePanel candidate={candidate} jobTitle={jobTitle} />
+        <InvitePanel
+          candidate={candidate}
+          jobTitle={jobTitle}
+          focusEmail={focusInvite}
+          onEmailFocused={onInviteFocused}
+        />
       </div>
       <p className="text-copy-13 text-muted-foreground">
-        Resume file: <span className="font-mono break-all">{candidate.resume_file_name}</span>
+        Resume file:{" "}
+        <a
+          href={resumeFileHref(candidate.resume_id)}
+          aria-label={`Download ${candidate.resume_file_name}`}
+          className="focus-ring rounded-sm font-mono break-all text-link underline underline-offset-4"
+        >
+          {candidate.resume_file_name}
+        </a>
       </p>
     </div>
   );

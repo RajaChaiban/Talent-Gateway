@@ -12,10 +12,12 @@ import { safeRedirectPath } from "@/lib/auth/safe-redirect";
 import { APP_NAME } from "@/lib/config";
 import { LoginForm } from "./login-form";
 
+/** Tab title for the login page. */
 export const metadata: Metadata = {
   title: `Sign in · ${APP_NAME}`,
 };
 
+/** The sign-in page. A signed-in visitor is redirected away by the proxy before this renders. */
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="flex flex-1 flex-col items-center justify-center surface-subtle px-4 py-12">

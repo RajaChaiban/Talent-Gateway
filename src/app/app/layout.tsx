@@ -6,6 +6,7 @@ import { APP_NAME } from "@/lib/config";
 import { signOut } from "./actions";
 import { SignOutButton } from "./sign-out-button";
 
+/** Default tab title for pages under /app. */
 export const metadata: Metadata = {
   title: `Jobs · ${APP_NAME}`,
 };

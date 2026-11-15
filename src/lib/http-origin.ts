@@ -1,5 +1,6 @@
 import { jsonError } from "@/lib/http";
 
+/** The message of the 403 sent to a state-changing request that did not come from the app's own pages. */
 export const CROSS_SITE_MESSAGE = "This request must come from the app itself.";
 
 function firstValue(header: string | null): string | null {

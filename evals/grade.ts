@@ -34,6 +34,7 @@ export const PASS_MARKS = {
   roleFloor: 50,
 } as const;
 
+/** The grade of one model case: its run-0 score and whether each stated expectation held. */
 export type CaseGrade = {
   case: ModelCase;
   /** The score of run 0, or null when it has none. */
@@ -54,6 +55,7 @@ export type CaseGrade = {
   spread: number | null;
 };
 
+/** The grade of one comparison: the two scores and whether the order and margin held. */
 export type ComparisonGrade = {
   comparison: Comparison;
   higher: number | null;
@@ -65,14 +67,17 @@ export type ComparisonGrade = {
   marginOk: boolean | null;
 };
 
+/** The grade of one local file: whether its ATS check outcome matched what was expected. */
 export type StructureGrade = {
   expectation: FileExpectation;
   outcome: StructureOutcome | null;
   ok: boolean;
 };
 
+/** The state of a measure: graded pass or fail, skipped by --only, or only reported with no pass mark. */
 export type MeasureStatus = "pass" | "fail" | "skipped" | "reported";
 
+/** One line of the report's measures table: a value set against its pass mark. */
 export type Measure = {
   id: string;
   name: string;
@@ -85,8 +90,10 @@ export type Measure = {
   failing: string[];
 };
 
+/** How long the model calls took, in seconds; null when no call was timed. */
 export type Speed = { calls: number; medianSeconds: number | null; p95Seconds: number | null };
 
+/** Token use and cost over all calls that reported usage. */
 export type Tokens = {
   /** Calls whose usage was reported. */
   calls: number;
@@ -96,6 +103,7 @@ export type Tokens = {
   costUsd: number | null;
 };
 
+/** The full result of a run: every graded case, comparison and measure, and whether all pass marks were met. */
 export type Grade = {
   cases: CaseGrade[];
   comparisons: ComparisonGrade[];
@@ -113,6 +121,7 @@ export type Grade = {
   passed: boolean;
 };
 
+/** What `grade` needs: the set, the call outcomes and the options the run was started with. */
 export type GradeInput = {
   set: EvalSet;
   calls: readonly CallOutcome[];
@@ -129,10 +138,12 @@ export type GradeInput = {
   filtering?: readonly FilteringOutcome[] | null;
 };
 
+/** Whether a stored-tenths score is inside the range, both ends included. */
 export function inRange(score: number, range: ScoreRange): boolean {
   return score >= range.min && score <= range.max;
 }
 
+/** Whether a stored-tenths score is inside the named band. */
 export function inBand(score: number, band: Band): boolean {
   return inRange(score, BANDS[band]);
 }
@@ -144,6 +155,7 @@ export function percentile(values: readonly number[], p: number): number | null 
   return sorted[Math.max(0, Math.ceil(p * sorted.length) - 1)];
 }
 
+/** The median of the values (mean of the middle two for an even count); null when empty. */
 export function median(values: readonly number[]): number | null {
   if (values.length === 0) return null;
   const sorted = values.toSorted((a, b) => a - b);

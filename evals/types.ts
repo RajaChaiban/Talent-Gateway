@@ -3,12 +3,14 @@ import type { AtsCheckId } from "@/lib/config";
 /** The score bands a case can expect, in stored tenths: strong is 7.5 to 10.0 on the scale people see. */
 export type Band = "strong" | "partial" | "weak";
 
+/** The score range of each band, in stored tenths. */
 export const BANDS: Readonly<Record<Band, { min: number; max: number }>> = {
   strong: { min: 75, max: 100 },
   partial: { min: 40, max: 74 },
   weak: { min: 0, max: 39 },
 };
 
+/** The job descriptions the evaluation scores against. */
 export type JobId =
   | "software-engineer"
   | "software-engineer-flexible"
@@ -21,6 +23,7 @@ export type JobId =
 /** The eight tests of docs/specs/pre-screen-and-evals.md, section 5. */
 export type TestNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+/** Every test number, in run order; used when --only is not given. */
 export const ALL_TESTS: readonly TestNumber[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /** A score range in stored tenths, both ends included: { min: 80, max: 100 } is 8.0 to 10.0. */
@@ -106,6 +109,7 @@ export type FilteringOutcome = {
   ok: boolean;
 };
 
+/** How well a resume shows one must-have: shown by work, a different tool of the same kind, named only in a list, or absent. */
 export type MustHaveStatus = "shown" | "equivalent" | "listed" | "missing";
 
 /**

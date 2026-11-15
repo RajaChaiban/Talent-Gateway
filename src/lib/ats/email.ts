@@ -67,6 +67,7 @@ function hasValidDomainPrefix(text: string, from: number): boolean {
   return false;
 }
 
+/** Returns how many email addresses `text` contains, by the rules in the file header above. */
 export function countEmails(text: string): number {
   let count = 0;
   let from = 0;

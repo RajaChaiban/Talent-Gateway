@@ -21,6 +21,7 @@ export function barBand(modelCase: ModelCase): Band | null {
   return within("weak") ? "weak" : null;
 }
 
+/** Whether a case is sent to the model for the chosen tests: its own test, test 5 when it is a stability case, or test 7 when it states a band. */
 export function caseRuns(modelCase: ModelCase, tests: readonly TestNumber[]): boolean {
   return (
     tests.includes(modelCase.test) ||

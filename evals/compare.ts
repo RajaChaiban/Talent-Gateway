@@ -14,6 +14,7 @@ import { ALL_TESTS } from "./types";
 /** A difference over this (1.0) is counted. */
 export const LARGE_DIFFERENCE = 10;
 
+/** One case scored in both runs, with the two scores in stored tenths. */
 export type CaseRow = {
   id: string;
   test: number;
@@ -24,6 +25,7 @@ export type CaseRow = {
   difference: number | null;
 };
 
+/** How the two runs rank one job's test 8 resumes. */
 export type JobOrder = {
   job: string;
   name: string;
@@ -34,6 +36,7 @@ export type JobOrder = {
   same: boolean | null;
 };
 
+/** The numbers of a run-against-run comparison, before it is rendered as text. */
 export type RunComparison = {
   rows: CaseRow[];
   /** Cases scored in both runs. */
@@ -58,6 +61,7 @@ function sameOrder(rows: readonly CaseRow[]): boolean {
   );
 }
 
+/** Compares the cases that appear in both scores files; a case present in only one is left out. */
 export function compareRuns(a: ScoresFile, b: ScoresFile): RunComparison {
   const rows: CaseRow[] = Object.entries(a.cases).flatMap(([id, left]) => {
     const right = b.cases[id];

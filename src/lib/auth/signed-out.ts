@@ -3,10 +3,12 @@ import { signInPath } from "./route-access";
 /** Supabase's session cookies: `sb-<ref>-auth-token`, its `.0`/`.1` chunks and the PKCE verifier. */
 const SUPABASE_AUTH_COOKIE = /^sb-.+-auth-token(?:-code-verifier)?(?:\.\d+)?$/;
 
+/** True when `name` is a cookie that holds Supabase session data. */
 export function isSupabaseAuthCookie(name: string): boolean {
   return SUPABASE_AUTH_COOKIE.test(name);
 }
 
+/** Where to send the browser and the names of the cookies to delete. */
 export type SignedOutPlan = { location: string; clearCookies: string[] };
 
 /**

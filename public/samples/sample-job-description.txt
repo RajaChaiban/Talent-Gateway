@@ -1,0 +1,27 @@
+Software Engineer, Product Platform
+Northwind Labs (a technology company building a web platform for small businesses)
+
+About the role
+You will build and run the web application our customers use every day, from the React front end to the Node.js services and the PostgreSQL database behind it. You will own features end to end: design, code, tests, release and the follow-up in production.
+
+Must have
+- 3 or more years of professional software engineering experience on a production web application.
+- TypeScript, written daily.
+- React for the front end.
+- Node.js for back-end services and APIs.
+- PostgreSQL: schema design, writing and tuning SQL queries.
+- Automated testing: unit and integration tests as part of your normal work.
+- CI/CD: you have set up or maintained build and deployment pipelines.
+- A bachelor's degree in computer science, software engineering or a related field.
+
+Nice to have
+- A master's degree in computer science or a related field.
+- Public work samples, such as a code repository.
+- Experience using AI coding tools in your development workflow.
+- Cloud infrastructure experience.
+
+What you will do
+- Ship features across the React front end and the Node.js API.
+- Design PostgreSQL schemas and keep queries fast.
+- Write tests and keep the CI/CD pipeline green and fast.
+- Review code and help other engineers.

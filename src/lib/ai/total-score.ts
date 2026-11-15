@@ -8,9 +8,12 @@ import { isScore, SCORE_SCALE_MESSAGE, toStored, type Score, type StoredScore } 
  */
 
 export const ROLE_MATCHES = ["same", "related", "unrelated"] as const;
+/** How the candidate's most recent role compares with the role of the job. */
 export type RoleMatch = (typeof ROLE_MATCHES)[number];
 
+/** How well a resume shows one must-have, from strongest to weakest. */
 export const MUST_HAVE_STATUSES = ["shown", "equivalent", "listed", "missing"] as const;
+/** One status from MUST_HAVE_STATUSES. */
 export type MustHaveStatus = (typeof MUST_HAVE_STATUSES)[number];
 
 /** What the total is computed from, on the 0 to 10 scale. */

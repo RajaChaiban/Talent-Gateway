@@ -10,6 +10,7 @@ import type { Comparison, ModelCase } from "./types";
 
 const written = (file: string) => ({ kind: "written", file }) as const;
 
+/** The model cases built from the hand-written resumes (tests 3 to 6). */
 export const WRITTEN_CASES: readonly ModelCase[] = [
   {
     id: "swe-for-swe",
@@ -132,6 +133,7 @@ export const WRITTEN_CASES: readonly ModelCase[] = [
   },
 ];
 
+/** The pairs of written cases where one must score higher than the other, some by a stated margin. */
 export const WRITTEN_COMPARISONS: readonly Comparison[] = [
   {
     id: "role-swe-over-architect",

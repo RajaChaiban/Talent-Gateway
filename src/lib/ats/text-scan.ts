@@ -67,6 +67,7 @@ function classifyCodePoint(codePoint: number): number {
   return NOISE_CLASS;
 }
 
+/** What `scanText` counted. */
 export type TextScan = {
   /** Visible characters (code points) plus one per whitespace run between them. */
   readableChars: number;
@@ -76,6 +77,7 @@ export type TextScan = {
   noiseChars: number;
 };
 
+/** Classifies every code point once and returns the counts. Cost is linear in the text length. */
 export function scanText(text: string): TextScan {
   const cache = new Map<number, number>();
   let readableChars = 0;
@@ -87,6 +89,7 @@ export function scanText(text: string): TextScan {
 
   for (let i = 0; i < text.length; i += 1) {
     const codePoint = text.codePointAt(i) ?? 0;
+    // A code point above 0xffff takes two UTF-16 units; skip the second.
     if (codePoint > 0xffff) i += 1;
 
     let kind: number;
@@ -124,6 +127,7 @@ export function scanText(text: string): TextScan {
         ruleChar = codePoint;
         ruleRun = 1;
       }
+      // At the third identical character the whole run becomes noise, so count all three, then one per extra.
       if (ruleRun === MIN_RULE_RUN) noiseChars += MIN_RULE_RUN;
       else if (ruleRun > MIN_RULE_RUN) noiseChars += 1;
     } else {

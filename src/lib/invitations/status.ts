@@ -1,5 +1,6 @@
 import { INVITE_LIMITS } from "@/lib/config";
 
+/** Where a candidate's invitation stands. NONE means no invitation row exists yet. */
 export type InviteStatus = "NONE" | "APPROVED" | "SENT" | "FAILED";
 
 /**

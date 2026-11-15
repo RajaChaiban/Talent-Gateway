@@ -3,11 +3,14 @@ import { RESUME_LIMITS } from "@/lib/config";
 import { RESUME_BUCKET } from "./bucket";
 import { SIZE_REJECTED, TYPE_REFUSED_BY_STORAGE } from "./messages";
 
+/** Shown when no response arrived at all (the status is null). */
 export const NETWORK_MESSAGE = "Could not reach the server. Check your connection and retry.";
+/** Shown when a file did not reach storage and no clearer cause is known: a lost connection, a timeout or a server error. */
 export const UPLOAD_FAILED_MESSAGE = "The upload did not finish. Check your connection and retry.";
 const STORAGE_DECLINED_MESSAGE = "Storage did not accept the upload. Try the file again.";
 const GENERIC_MESSAGE = "Something went wrong. Try again in a moment.";
 
+/** Shown for an item that is waiting to retry after a 429. */
 export const RATE_LIMITED_MESSAGE = "Too many requests, try again";
 
 /** `status` is null when no response arrived at all (a network error). */
@@ -21,6 +24,7 @@ export type ApiFailure = {
   /** A refusal that trying again cannot fix. */
   final?: boolean;
 };
+/** What every browser call to the resume routes and storage returns: the parsed `data`, or an `ApiFailure`. Errors are returned, not thrown. */
 export type ApiResult<T> = { ok: true; data: T } | ApiFailure;
 
 /** The `Retry-After` header in seconds, as milliseconds. A date form is ignored. */
@@ -122,6 +126,7 @@ export function completeResume(resumeId: string, retry = false, signal?: AbortSi
   );
 }
 
+/** Removes a resume and its stored file through `DELETE /api/resumes/[id]`. */
 export function deleteResume(resumeId: string) {
   return call(`/api/resumes/${resumeId}`, { method: "DELETE" }, removed);
 }

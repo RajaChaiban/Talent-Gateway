@@ -31,6 +31,7 @@ const testNumber = z.number().refine((value): value is TestNumber => ALL_TESTS.s
   message: "a test number from 1 to 8",
 });
 
+/** The shape of the scores JSON a run writes; `eval:compare` checks any file it reads against it. */
 export const scoresFileSchema = z.object({
   model: z.string(),
   standIn: z.boolean(),
@@ -45,7 +46,9 @@ export const scoresFileSchema = z.object({
   cases: z.record(z.string(), caseScores),
 });
 
+/** A parsed scores file. */
 export type ScoresFile = z.infer<typeof scoresFileSchema>;
+/** The saved scores of one case. */
 export type CaseScores = z.infer<typeof caseScores>;
 
 /** The JSON a run writes next to its report. */

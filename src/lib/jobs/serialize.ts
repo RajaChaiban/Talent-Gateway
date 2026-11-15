@@ -20,8 +20,10 @@ type Shown<Row, Key extends keyof Row> = Omit<Row, Key> & {
   [K in Key]: ShownBrand<Row[K]>;
 };
 
+/** A job as the API sends it: both thresholds are scores on the 0 to 10 scale. */
 export type ApiJob = Shown<Job, "top_talent_threshold" | "invite_threshold">;
 
+/** The job fields that hold stored scores. Pass them to `toApi`. */
 export const JOB_SCORES = ["top_talent_threshold", "invite_threshold"] as const;
 
 /** Converts the named stored-score fields of `row` to 0 to 10 scores. A field that was already converted does not type-check. */

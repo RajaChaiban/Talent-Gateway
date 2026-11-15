@@ -1,5 +1,7 @@
 "use client";
 
+// The email and password form of the login page; it submits to the `signIn` server action.
+
 import { useActionState } from "react";
 import { CircleAlert, LoaderCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,6 +12,7 @@ import { signIn, type SignInState } from "./actions";
 
 const initialState: SignInState = { email: "", fieldErrors: {}, formError: null };
 
+/** `next` is the page to open after sign-in; it is sent as a hidden field and checked again on the server. */
 export function LoginForm({ next }: { next: string }) {
   const [state, formAction, pending] = useActionState(signIn, initialState);
   const { email: emailError, password: passwordError } = state.fieldErrors;

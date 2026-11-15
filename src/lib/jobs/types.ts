@@ -17,16 +17,21 @@ type CandidateRow = Tables<"candidates">;
 type ResumeRow = Tables<"resumes">;
 type InvitationRow = Tables<"invitations">;
 
+/** A job row with its thresholds as stored tenths. */
 export type Job = StoredRow<JobRow, "top_talent_threshold" | "invite_threshold">;
+/** A candidate row with its match score as stored tenths. */
 export type Candidate = StoredRow<CandidateRow, "match_score">;
 
+/** A job as the list shows it: no description, plus the number of resumes. */
 export type JobListItem = Omit<Job, "description"> & { resume_count: number };
 
+/** A resume the ATS check set aside, with what the job page shows of it. */
 export type NotAtsReadyResume = StoredRow<
   Pick<ResumeRow, "id" | "file_name" | "ats_score" | "ats_reasons" | "created_at">,
   "ats_score"
 >;
 
+/** A resume with its ATS status and override, so it can be sorted into the groups of ResumeCounts. */
 export type ResumeForFilter = NotAtsReadyResume &
   Pick<ResumeRow, "ats_status" | "ats_override">;
 
@@ -43,6 +48,7 @@ export type RankedCandidate = Omit<Candidate, "radar_results"> & {
   invitation: InvitationSummary | null;
 };
 
+/** A resume the recruiter overrode that is waiting to be scored. */
 export type QueuedResume = Pick<NotAtsReadyResume, "id" | "file_name" | "created_at">;
 
 /**
@@ -83,6 +89,7 @@ export function asJob(row: JobRow): Job {
   return row as Job;
 }
 
+/** Adds the resume count to a job row without its description. */
 export function asJobListItem(row: ListRow, resumeCount: number): JobListItem {
   return { ...row, resume_count: resumeCount } as JobListItem;
 }
@@ -99,6 +106,7 @@ export function asCandidateWithInvitation(
   return row as CandidateWithInvitation;
 }
 
+/** Marks resume rows read for sorting into groups as ResumeForFilter. */
 export function asResumesForFilter(rows: ResumeFilterRow[]): ResumeForFilter[] {
   return rows as ResumeForFilter[];
 }

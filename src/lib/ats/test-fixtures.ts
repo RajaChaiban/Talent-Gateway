@@ -31,6 +31,7 @@ SQL, Python, pandas, Tableau, dbt, Excel, stakeholder reporting, experiment desi
 const CELL_RULE = "┌──────────────────────────┬──────────────────────────┐";
 const CELL_BASE = "└──────────────────────────┴──────────────────────────┘";
 
+/** A two-column resume exported as a table drawn with box and shade characters. Fails the layout noise and standard sections checks. */
 export const TWO_COLUMN_TABLE_RESUME = [
   "Marcus Oyelaran",
   "marcus.oyelaran@example.com",
@@ -56,8 +57,10 @@ export const TWO_COLUMN_TABLE_RESUME = [
   CELL_BASE,
 ].join("\n");
 
+/** A scanned resume: almost no readable text, only whitespace and a form feed. */
 export const SCANNED_RESUME = "Scan 0001\n\n\u00A0\n  \f";
 
+/** A resume exported as a table drawn with pipes, dashes and underscores. Fails the layout noise check. */
 export const ASCII_TABLE_RESUME = [
   "Tomas Eriksen",
   "tomas.eriksen@example.com",
@@ -79,6 +82,7 @@ export const ASCII_TABLE_RESUME = [
   "+------------------------+-----------------------+",
 ].join("\n");
 
+/** A clean resume full of text that looks like noise but is ordinary (C++, C#, URLs, percentages, ampersands, dotted leaders). Passes every check. */
 export const RICH_CLEAN_RESUME = `Dara Okonkwo-Reyes
 Staff Engineer | dara.okonkwo@example.org | +44 20 7946 0001 | (555) 010-9999
 https://github.com/dara-example/portfolio  https://www.example.org/in/dara

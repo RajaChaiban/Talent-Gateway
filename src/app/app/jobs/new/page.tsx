@@ -1,3 +1,5 @@
+// The page at /app/jobs/new, where a recruiter creates a job.
+
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -5,10 +7,12 @@ import { requireSignedInUser } from "@/lib/auth/require-signed-in-user";
 import { APP_NAME } from "@/lib/config";
 import { NewJobForm } from "./new-job-form";
 
+/** Tab title for the new-job page. */
 export const metadata: Metadata = {
   title: `New job · ${APP_NAME}`,
 };
 
+/** Checks the user itself, because the /app layout does not gate its pages, then shows the form. */
 export default async function NewJobPage() {
   await requireSignedInUser("/app/jobs/new");
 

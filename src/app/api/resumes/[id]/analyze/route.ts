@@ -15,6 +15,10 @@ import {
  */
 export const maxDuration = 60;
 
+/**
+ * Analyzes one resume and returns its new status. Needs a signed-in user and a same-origin request.
+ * Responds 404 when the resume is not the caller's (row-level security hides it) and settles the job's status once the resume is done.
+ */
 export async function POST(request: Request, ctx: RouteContext<"/api/resumes/[id]/analyze">) {
   const auth = await requireUser();
   if (!auth.ok) return auth.response;

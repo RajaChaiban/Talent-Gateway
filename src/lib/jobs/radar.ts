@@ -2,8 +2,10 @@ import { z } from "zod";
 
 const flag = z.object({ flagged: z.boolean(), note: z.string() });
 
+/** The Radar flags read from `radar_results`. A flag is missing when it was absent or malformed. */
 export type RadarResults = Partial<Record<"copycat" | "employment_gaps" | "job_hopping" | "ai_written", z.infer<typeof flag>>>;
 
+/** The four Radar flags with their labels, in the order they are shown. */
 export const RADAR_FLAGS = [
   { key: "copycat", label: "Copycat" },
   { key: "employment_gaps", label: "Employment gaps" },
@@ -11,6 +13,7 @@ export const RADAR_FLAGS = [
   { key: "ai_written", label: "AI-written" },
 ] as const;
 
+/** One set flag, ready to show as a chip with its note. */
 export type RadarChip = { key: (typeof RADAR_FLAGS)[number]["key"]; label: string; note: string };
 
 /**

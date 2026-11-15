@@ -13,6 +13,7 @@ const analyzeSchema = z.object({ data: z.object({ resume_id: z.string(), status:
 const errorSchema = z.object({ error: z.object({ code: z.string(), message: z.string() }) });
 
 const count = z.number().int().min(0);
+/** The shape of the progress route's `data`, checked before the page uses it. */
 export const progressSchema = z.object({
   total: count,
   extracted: count,
@@ -22,8 +23,10 @@ export const progressSchema = z.object({
   remaining: count,
   status: z.string(),
 });
+/** A job's resume counts and its status, as the progress route returns them. */
 export type JobProgress = z.infer<typeof progressSchema>;
 
+/** Shown when an Analyze run could not start, or the answer could not be understood. */
 export const START_FAILED_MESSAGE = "Analysis could not start. Try again in a moment.";
 
 /** Milliseconds from a Retry-After header in seconds, or null. */
@@ -39,6 +42,7 @@ async function errorMessage(response: Response): Promise<string> {
   return parsed.success ? parsed.data.error.message : START_FAILED_MESSAGE;
 }
 
+/** The start call's answer: the ids of the resumes to analyze, or a message to show. */
 export type StartResult = { ok: true; resumeIds: string[] } | { ok: false; message: string };
 
 /** POST /api/jobs/[id]/analyze: the resumes that need work. */

@@ -18,6 +18,7 @@ import { ExpandableText } from "./expandable-text";
 import { JobThresholds } from "./job-thresholds";
 import { ResumesSection } from "./resumes-section";
 
+/** Tab title for the job page. */
 export const metadata: Metadata = {
   title: `Job · ${APP_NAME}`,
 };

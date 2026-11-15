@@ -11,6 +11,7 @@ import {
   type StoredScore,
 } from "@/lib/score";
 
+/** The two job thresholds the sliders edit; the names match the job columns. */
 export type ThresholdField = "top_talent_threshold" | "invite_threshold";
 /** Stored tenths (0 to 100): the state stays whole numbers. The slider itself runs on the 0 to 10 scale. */
 export type Thresholds = Record<ThresholdField, StoredScore>;

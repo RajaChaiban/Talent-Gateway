@@ -1,6 +1,8 @@
 import { DEFAULT_SIGNED_IN_PATH, safeRedirectPath } from "./safe-redirect";
 
+/** The sign-in page. */
 export const SIGN_IN_PATH = "/login";
+/** The route that clears the Supabase session cookies and then goes to sign-in. */
 export const SIGNED_OUT_PATH = "/auth/signed-out";
 
 /** `/login?next=…` with `next` reduced to a same-site path. */
@@ -18,10 +20,12 @@ export function signedOutPath(next: string | null | undefined): string {
   return `${SIGNED_OUT_PATH}?${params.toString()}`;
 }
 
+/** What the proxy does with a request: let it through, or redirect it. */
 export type RouteAccess =
   | { action: "continue" }
   | { action: "redirect"; to: string };
 
+/** The parts of a request that the redirect rule looks at. */
 export type RouteRequest = {
   method: string;
   pathname: string;

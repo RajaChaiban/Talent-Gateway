@@ -8,6 +8,8 @@ export const inviteEmailSchema = z
   .max(254, "Enter a valid email address")
   .pipe(z.email("Enter a valid email address"));
 
+/** The body of the invite request: the approved address. */
 export const inviteBodySchema = z.object({ email: inviteEmailSchema });
 
+/** A candidate id from the URL; it must be a UUID. */
 export const candidateIdSchema = z.uuid({ error: "Candidate id is not valid" });

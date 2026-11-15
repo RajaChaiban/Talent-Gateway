@@ -1,5 +1,7 @@
+/** What one save call reports. `message` is shown to the recruiter when the save failed. */
 export type SaveOutcome = { ok: true } | { ok: false; message?: string };
 
+/** What the sequencer tells the control. `value` is the value the control should show. */
 export type SaveEvent =
   | { status: "saving"; value: number }
   | { status: "saved"; value: number }

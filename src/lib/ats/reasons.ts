@@ -3,6 +3,7 @@ import type { AtsCheckId, AtsConfig } from "@/lib/config";
 const BYTES_PER_MB = 1024 * 1024;
 const MAX_DECIMALS = 4;
 
+/** What the ATS check measured for one resume. `reasonFor` words a failed check from these values. */
 export type Measured = {
   readableChars: number;
   textMissing: boolean;
@@ -77,6 +78,10 @@ function fileReason(m: Measured, config: AtsConfig): string {
   return `This file ${problems.join(" and ")}.`;
 }
 
+/**
+ * One plain sentence that says why check `id` failed, built from what was measured and the limits in `config`.
+ * Called only for checks that failed.
+ */
 export function reasonFor(id: AtsCheckId, m: Measured, config: AtsConfig): string {
   switch (id) {
     case "readable_text":

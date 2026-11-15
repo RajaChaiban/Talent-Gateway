@@ -11,6 +11,7 @@ import type { InviteStatus } from "./status";
 
 type Client = Pick<ServerClient, "from">;
 
+/** The invitation columns the app reads. */
 export type Invitation = Pick<
   Tables<"invitations">,
   "id" | "candidate_id" | "approved_at" | "sent_to" | "sent_at" | "message_id" | "error"
@@ -18,6 +19,7 @@ export type Invitation = Pick<
 
 const INVITATION_COLUMNS = "id, candidate_id, approved_at, sent_to, sent_at, message_id, error";
 
+/** A candidate with the title of its job and its invitation (null when none): everything the invite flow needs. */
 export type CandidateForInvite = {
   id: string;
   full_name: string;
@@ -55,6 +57,7 @@ export async function getCandidateForInvite(
   };
 }
 
+/** The invitation of a candidate, or null when it has none. There is at most one: `candidate_id` is unique. */
 export async function getInvitation(
   supabase: Client,
   candidateId: string,
@@ -70,6 +73,7 @@ export async function getInvitation(
 
 const UNIQUE_VIOLATION = "23505";
 
+/** What approving an invitation records: who approved, when, and the address approved. */
 export type Approval = { approved_by: string; approved_at: string; sent_to: string };
 
 /**
@@ -123,6 +127,7 @@ export async function claimRetry(
   return data;
 }
 
+/** Records a delivered email (when, and the provider's message id) and clears any earlier error. */
 export async function markInvitationSent(
   supabase: Client,
   id: string,

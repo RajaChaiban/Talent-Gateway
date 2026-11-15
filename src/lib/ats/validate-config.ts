@@ -1,5 +1,6 @@
 import type { AtsCheckId, AtsConfig } from "@/lib/config";
 
+/** Every check id. Each one must have a weight and a required flag in the config. */
 export const CHECK_IDS: readonly AtsCheckId[] = [
   "readable_text",
   "contact_info",

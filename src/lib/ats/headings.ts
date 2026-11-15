@@ -142,6 +142,10 @@ function headingBody(text: string, lineStart: number, lineEnd: number, maxChars:
   return text.slice(first, last + 1);
 }
 
+/**
+ * Returns the required sections (names from `config.requiredSections`) that appear as headings in `text`,
+ * each once, in the order first found. The heading rules are in the comment at the top of this file.
+ */
 export function findSections(text: string, config: AtsConfig): string[] {
   const { byText, firstLetters } = variantsFor(config);
   const rawLimit = config.maxHeadingChars * MAX_RAW_LINE_FACTOR;

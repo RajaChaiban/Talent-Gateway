@@ -181,7 +181,8 @@ If this becomes multi-tenant, add `owner_id` to `jobs` and scope every policy th
 | `resumes` | Private | `{job_id}/{resume_id}/{file_name}` | PDF or DOCX, 5 MB |
 
 - Uploads go browser → Storage with a signed upload URL; the file never passes through a Vercel function.
-- Reads happen on the server only: `POST /api/resumes/[id]/complete` downloads the file once to extract its text.
+- The server reads the bytes once: `POST /api/resumes/[id]/complete` downloads the file to extract its text.
+- A recruiter downloads a file through `GET /api/resumes/[id]/file`: the route reads the row with the recruiter's client (so row-level security applies), signs a link to the object valid for 60 seconds that saves it under the row's `file_name`, and redirects the browser to it. The bucket stays private; the bytes come from Storage, not through a function, and a `pending` row offers no link.
 - Removing one resume (`DELETE /api/resumes/[id]`) deletes its object first, then its row, so a storage failure never leaves an object with no row.
 - `authenticated` may read and write objects in `resumes`; `anon` may not.
 - Deleting a job does not delete its files automatically; the delete route removes the objects first, then the rows.

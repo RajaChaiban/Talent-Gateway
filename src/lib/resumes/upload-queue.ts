@@ -1,7 +1,9 @@
 import { RESUME_LIMITS } from "@/lib/config";
 
+/** Where an item is: waiting for a slot, running, waiting to retry, or finished. */
 export type ItemStage = "queued" | "running" | "waiting" | "done" | "failed";
 
+/** One queued item: its payload and where it is. */
 export type QueueItem<T> = {
   id: string;
   payload: T;
@@ -16,6 +18,7 @@ export type QueueItem<T> = {
   final: boolean;
 };
 
+/** How many items are in each stage, for the progress line. */
 export type QueueProgress = {
   total: number;
   done: number;
@@ -25,6 +28,7 @@ export type QueueProgress = {
   waiting: number;
 };
 
+/** A snapshot of the queue's items and counts, as the page reads it. */
 export type QueueState<T> = {
   items: readonly QueueItem<T>[];
   progress: QueueProgress;
@@ -36,12 +40,14 @@ export type Outcome =
   | { kind: "failed"; message: string; final?: boolean }
   | { kind: "retry"; message: string; retryAfterMs?: number };
 
+/** What the queue hands the worker along with each item. */
 export type WorkerContext = {
   report: (detail: string) => void;
   /** Aborted when the queue is stopped; the worker passes it to every request. */
   signal: AbortSignal;
 };
 
+/** Settings for `createUploadQueue`. `limit` and `worker` are required; the retry values default to `RESUME_LIMITS.retry`. */
 export type QueueOptions<T> = {
   limit: number;
   worker: (payload: T, context: WorkerContext) => Promise<Outcome>;
@@ -55,6 +61,7 @@ export type QueueOptions<T> = {
   random?: () => number;
 };
 
+/** The message of an item whose worker threw instead of returning an outcome. */
 export const WORKER_CRASHED_MESSAGE = "Something went wrong. Try again.";
 
 /**
@@ -293,4 +300,5 @@ export function createUploadQueue<T>(options: QueueOptions<T>) {
   };
 }
 
+/** The queue object `createUploadQueue` returns. */
 export type UploadQueue<T> = ReturnType<typeof createUploadQueue<T>>;

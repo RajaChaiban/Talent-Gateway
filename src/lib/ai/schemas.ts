@@ -39,6 +39,7 @@ export const scoreOutputSchema = z.object({
   gaps: z.array(listItem).max(LIMITS.listMaxItems),
 });
 
+/** The validated reply of the scoring call. */
 export type ScoreOutput = z.infer<typeof scoreOutputSchema>;
 
 const radarFlag = z.object({
@@ -54,4 +55,5 @@ export const radarResultsSchema = z.object({
   ai_written: radarFlag,
 });
 
+/** Radar results with all four flags present, as written to `candidates.radar_results`. */
 export type RadarResults = z.infer<typeof radarResultsSchema>;

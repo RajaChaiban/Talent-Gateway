@@ -49,6 +49,7 @@ function total(values: readonly (number | null)[]): number | null {
     : values.reduce<number>((sum, value) => sum + (value ?? 0), 0);
 }
 
+/** The result of one scoring call: the total and its parts, and the tokens used when reported. */
 export type ScoreCall = {
   /** The total in stored tenths. */
   score: number;
