@@ -1,6 +1,6 @@
 # BACKEND.md — server-side design
 
-Everything that runs on the server for this app. Today that is sign-in with Supabase Auth, the protected `/app` area, the jobs list, creating a job, and the job page with its threshold editor (`PATCH /api/jobs/[id]`) and its resume upload (`POST /api/resumes/sign`, `POST /api/resumes/[id]/complete`, `DELETE /api/resumes/[id]`). There are no model calls, no workflows and no screening pipeline yet; those sections stay empty until the feature that fills them is merged.
+Everything that runs on the server for this app. Today that is sign-in with Supabase Auth, the protected `/app` area, the jobs list, creating a job, the job page with its threshold editor (`PATCH /api/jobs/[id]`) and its resume upload (`POST /api/resumes/sign`, `POST /api/resumes/[id]/complete`, `DELETE /api/resumes/[id]`), and the screening pipeline's route handlers (`POST /api/jobs/[id]/analyze`, `GET /api/jobs/[id]/progress`, `POST /api/resumes/[id]/analyze`, `POST /api/resumes/[id]/score-anyway`, section 7). No page calls the screening routes yet, and there are no workflows.
 
 **This document describes the code on `main`.** Two rules keep it that way:
 
@@ -24,6 +24,9 @@ Next.js on Vercel, with Supabase (Postgres, Auth, Storage) as the system of reco
 | `/api/resumes/sign` | Dynamic route handler | The session cookies, the job, the job's resume count; inserts one `resumes` row and creates a signed upload token |
 | `/api/resumes/[id]/complete` | Dynamic route handler | The session cookies, one `resumes` row and its stored file; updates the row |
 | `/api/resumes/[id]` | Dynamic route handler | The session cookies and one `resumes` row; deletes its stored file, then the row |
+| `/api/jobs/[id]/analyze` | Dynamic route handler | The session cookies, one `jobs` row, the job's resumes and candidate ids; updates `resumes.status` and `jobs.status` |
+| `/api/jobs/[id]/progress` | Dynamic route handler | The session cookies, one `jobs` row, the job's resumes and candidate ids; may update `jobs.status` |
+| `/api/resumes/[id]/analyze`, `/api/resumes/[id]/score-anyway` | Dynamic route handler | The session cookies, one `resumes` row, its job, up to 8 other resumes' text; writes `resumes.ats_*` and `status`, one `candidates` row and `jobs.status`; up to two model calls |
 | `/auth/signed-out` | Dynamic route handler | The session cookies |
 
 Data access lives in `src/lib/<feature>/queries.ts`. A query takes the caller's Supabase client instead of creating one, so the page decides whose access rules apply. `listJobs` reads the newest 100 jobs with `resumes(count)` in the same query, and leaves the description out because the list never shows it. The job page reads the job with `getJob` and its resumes with `listResumes` (`src/lib/resumes/queries.ts`; id, name, status and date, oldest first, never the text) in parallel; an id that is not a UUID, or a job the recruiter cannot see, renders the `/app` not-found page. A failed database call throws `JobsDataError` (or `ResumesDataError` for the resumes queries), which the `/app` error boundary turns into a retryable message and a route handler turns into a 500 with a safe message.
@@ -48,14 +51,15 @@ Only the folders the check tracks (`src/lib` and `src/app/api`) are listed. The 
 src/
   app/
     api/
-      jobs/                       `[id]/route.ts`: PATCH a job's thresholds
-      resumes/                    `sign/route.ts`: POST to reserve a row and get a signed upload token; `[id]/complete/route.ts`: POST to read the uploaded file's text; `[id]/route.ts`: DELETE a resume and its file
+      jobs/                       `[id]/route.ts`: PATCH a job's thresholds; `[id]/analyze/route.ts`: POST to start an analysis run; `[id]/progress/route.ts`: GET the run's counts and settle the job
+      resumes/                    `sign/route.ts`: POST to reserve a row and get a signed upload token; `[id]/complete/route.ts`: POST to read the uploaded file's text; `[id]/route.ts`: DELETE a resume and its file; `[id]/analyze/route.ts`: POST to screen one resume; `[id]/score-anyway/route.ts`: POST to override the ATS gate and screen it
   lib/
     ai/                           the model calls: `scoreResume` and `runRadar`, their prompts and output schemas, the shared structured-output call (`generate.ts`), the model resolver and test stand-in (`model.ts`, `fake-model.ts`) and the rate-limit error (`errors.ts`)
     ats/                          the rule-based pre-screen: `checkAts` (`check-ats.ts`) and its text scan, heading finder, email finder, reasons and config check; `to-columns.ts` turns a result into `resumes` columns
     auth/                         sign-in input checks and error messages, the safe redirect path, the proxy rule (`route-access.ts`), the page guard (`require-signed-in-user.ts`), the route-handler guard (`require-user.ts`) and the one place that asks Supabase who is signed in (`verified-user.ts`)
-    jobs/                         job queries that take the caller's client (`queries.ts`), input schemas (`schemas.ts`), row types with scores marked as stored tenths (`types.ts`), the API body on the 0 to 10 scale (`serialize.ts`), route-handler responses (`api.ts`), the threshold editor's save sequencer and commit scheduler, and date and count labels (`helpers.ts`)
+    jobs/                         job queries that take the caller's client (`queries.ts`), input schemas (`schemas.ts`), job and candidate row types with scores marked as stored tenths (`types.ts`), the API body on the 0 to 10 scale (`serialize.ts`), route-handler responses (`api.ts`), the threshold editor's save sequencer and commit scheduler, and date and count labels (`helpers.ts`)
     resumes/                      resume upload: queries and storage calls that take the caller's client (`queries.ts`), the sign body schema (`schemas.ts`), file names, types and storage paths (`files.ts`, `bucket.ts`), the real-type check (`sniff.ts`), text extraction (`extract-text.ts`, `zip-inflate.ts`), the complete step (`complete.ts`), route-handler responses (`api.ts`), messages and row types, and the browser side: the drop check (`drop.ts`), the upload queue and its worker (`upload-queue.ts`, `upload-pipeline.ts`), the fetch and storage helpers (`client-api.ts`), the remove verdict (`removal.ts`) and the stored status label (`saved-status.ts`)
+    screening/                    the screening pipeline for one resume and the only caller of the model calls (`analyze.ts`), its queries (`queries.ts`), the pure selection, progress and settle rules (`work.ts`), the file facts for the ATS check (`file-facts.ts`) and the routes' responses and job settling (`api.ts`)
     supabase/                     the server Supabase client (`server.ts`), the browser client used only for direct uploads to Storage (`client.ts`), the check of its two public variables (`public-env.ts`) and the database types generated from the hosted schema (`database.types.ts`)
 ```
 
@@ -83,6 +87,10 @@ One row per method and path.
 | POST | `/api/resumes/sign` | Session, same origin | JSON `{ resume_id?, job_id, file_name, content_type, size }`: `resume_id` a UUID the browser chose, `file_name` at most 255 characters after cleaning and ending in the type's extension, `content_type` PDF or DOCX, `size` at most 5 MB | Checks the user, the origin and the input; a known `resume_id` for the same job and name gets a fresh token for its row. Otherwise checks the job and the 50-per-job cap, creates a signed upload token and inserts a `pending` row. `maxDuration` 30 | 201 (new row) or 200 (same row again) `{ data: { resume_id, path, token } }`; 400, 401, 403, 404 (job), 409 `conflict` (job full, or the id is used for another file), 413, 415, 500 or 503 |
 | POST | `/api/resumes/[id]/complete` | Session, same origin | Query `retry=1` (optional) to judge a failed file again | Downloads the stored file, checks its real type and extracts its text; sets `extracted_text` and `status` (`extracted` or `failed`). A resume whose text is stored, or a failed one without `retry`, is answered as stored without a download. `maxDuration` 30 | 200 `{ data: { resume_id, status, characters, message? } }` (`message` when failed); 400, 401, 403, 404, 409 `conflict` (the file is not in storage yet), 500 or 503 |
 | DELETE | `/api/resumes/[id]` | Session, same origin | None | Deletes the stored file, then the row. `maxDuration` 30 | 200 `{ data: { resume_id, removed: true } }`; 400, 401, 403, 404, 500 or 503 |
+| POST | `/api/jobs/[id]/analyze` | Session, same origin | None | Starts an analysis run: lists the job's resumes that need work (text, no candidate, and not checked, ATS-ready or overridden), oldest first; puts earlier analysis failures among them back to `extracted`; sets the job to `ANALYZING`, or `DONE` when there is nothing to do. Makes no model call and starts nothing: the browser calls the per-resume route for each id. `maxDuration` 30 | 200 `{ data: { resume_ids } }`; 400, 401, 403, 404, 500 or 503 |
+| GET | `/api/jobs/[id]/progress` | Session | None | Counts the job's resumes from the rows and settles a job in `ANALYZING` that has nothing left (section 7). `maxDuration` 30 | 200 `{ data: { total, extracted, ats_failed, scored, failed, remaining, status } }`; 400, 401, 404, 500 or 503 |
+| POST | `/api/resumes/[id]/analyze` | Session, same origin | None | Runs the screening pipeline for one resume (section 7), then settles its job. Repeating it is safe. `maxDuration` 60 | 200 `{ data: { resume_id, status } }`, `status` one of `scored`, `ats_failed`, `not_extracted`, `failed`; 400, 401, 403, 404, 500, or 503 (`model_busy` with `Retry-After`, or `auth_unavailable`) |
+| POST | `/api/resumes/[id]/score-anyway` | Session, same origin | None | The recruiter's override of the ATS gate. Only for a resume the check set aside (`ats_status = 'NOT_ATS_READY'`) that has no candidate: sets `ats_override` in one guarded write, sets the job to `ANALYZING`, runs the pipeline, then settles the job. `maxDuration` 60 | 200 `{ data: { resume_id, ats_override: true, status } }`; 400, 401, 403, 404, 409 `conflict` (already scored, or not set aside; no write, no model call), 500, or 503 (`model_busy` or `auth_unavailable`) |
 
 ### Server actions
 
@@ -94,7 +102,7 @@ One row per method and path.
 
 ## 5. Model calls
 
-Two calls, both through the AI SDK to Vercel AI Gateway. Nothing calls them yet; the analyze route that does is not merged.
+Two calls, both through the AI SDK to Vercel AI Gateway. Only the screening pipeline (`analyzeResume`, section 7) calls them, in parallel, for a resume that passed or was overridden past the ATS gate.
 
 | Key | Model | Function | Returns |
 |---|---|---|---|
@@ -104,7 +112,7 @@ Two calls, both through the AI SDK to Vercel AI Gateway. Nothing calls them yet;
 - **Gateway and credentials.** A model is a plain `provider/model` string from `AI_MODELS` in `src/lib/config.ts`, which the AI SDK sends to AI Gateway. The gateway is authenticated by the project's OIDC token (`VERCEL_OIDC_TOKEN`, supplied by Vercel at run time and by `vercel env pull` locally), so the app holds no provider key. Changing a model or a provider is a one-line config change.
 - **Structured output.** Both calls go through `generateStructured` (`src/lib/ai/generate.ts`): `generateText` with `Output.object({ schema })`, so the answer is parsed against a Zod schema (`src/lib/ai/schemas.ts`) and never read as free text. An answer that does not parse is retried once; a second failure fails that resume instead of guessing.
 - **Limits (`SCREENING_AI_LIMITS`).** One call, with its parse retry and the SDK's one transport retry, shares a single 25 second abort budget. The job description is cut at 8,000 characters and the resume at 12,000 before sending, and Radar compares at most 8 other resumes as 600-character excerpts, so the cost of a call is bounded whatever was uploaded.
-- **Rate limits.** A 429 from the gateway becomes `ModelBusyError` with the seconds to wait. It is retryable: the resume is not marked failed.
+- **Rate limits.** A 429 from the gateway becomes `ModelBusyError` with the seconds to wait. It is retryable: the resume is not marked failed, and the route answers 503 `model_busy` with `Retry-After`.
 - **Prompts.** The resume and the job description are sent as clearly delimited sections and the instructions tell the model to treat them as data, so text inside a resume cannot act as an instruction. Radar excerpts leave out the header lines of other resumes, so one candidate's contact details are not sent with another's.
 - **Tests never call a model.** Unit tests use the AI SDK's mock model. For browser tests, `E2E_FAKE_MODEL=1` makes `resolveModel` return a local stand-in, and it is refused on any Vercel deployment (`standInAllowed`), so production can only ever use the real gateway model.
 
@@ -114,7 +122,20 @@ None yet.
 
 ## 7. Screening pipeline
 
-Two stages exist as libraries: the pre-screen below and the model calls in section 5. Nothing calls them yet; the analyze route that runs the pre-screen and then the model is not merged.
+One resume at a time, through `analyzeResume` (`src/lib/screening/analyze.ts`), which `POST /api/resumes/[id]/analyze` and `POST /api/resumes/[id]/score-anyway` call. It is the only module that imports `scoreResume` and `runRadar`; `src/lib/screening/boundary.test.ts` fails if anything else does, so no caller can reach a model without the ATS gate running first. Everything runs with the recruiter's client, so row-level security applies.
+
+1. **Load.** The resume and its job; an unknown id is a 404.
+2. **Already scored.** A resume that has a candidate row answers `scored` with no model call and no write. This is what makes a repeated run cost nothing.
+3. **No text.** A resume without extracted text (still uploading, or its upload failed) answers `not_extracted` and is not touched.
+4. **ATS gate.** `checkAts` (below) runs on the text and the file facts (the type from the file name's extension; the upload already checked the real type), and the result is saved to `resumes.ats_status`, `ats_score` and `ats_reasons` before any model call. The gate is read back from the saved row: `NOT_ATS_READY` without `ats_override` answers `ats_failed` and makes **zero** model calls.
+5. **Model calls.** `scoreResume` and `runRadar` run in parallel (Radar gets up to 8 of the job's other resumes with text, oldest first, as excerpts for the copycat check). When one fails the other is aborted.
+6. **Save.** One `candidates` row: the name (the file name without its extension when the model gives none), the match score in tenths, summary, strengths, gaps, Radar results, the first email address in the resume text (lower case; null when there is none) and `invite_status = 'NONE'` whatever the score. Only a recruiter's click invites anyone. The insert is an upsert on `(job_id, resume_id)` that does nothing on conflict, and a clash on the unique `resume_id` is treated the same way, so two simultaneous calls for one resume make one candidate and both answer `scored`.
+
+**Failures.** A model error (an answer that fails its schema twice, a gateway error) is logged once without resume text and marks the resume `status = 'failed'` with its text kept, which is how an analysis failure differs from an upload failure; the route still answers 200 with `status: "failed"`, so the browser's queue moves on, and the next run retries it. A resume that has a candidate is never left failed, whatever order two racing calls finish in. A **429 from the gateway** is not a failure: it throws `ModelBusyError`, nothing is written, and the route answers 503 `model_busy` with `Retry-After` so the browser tries that resume again later. A database failure is a 500.
+
+**A run and the job's status.** `POST /api/jobs/[id]/analyze` lists the resumes that need work, puts earlier analysis failures among them back to `extracted`, and sets the job to `ANALYZING` (`DONE` when the list is empty). The browser then calls the per-resume route for each id, one request per resume, so each function stays short (at most two parallel model calls with a 25 second budget each, inside a 60 second `maxDuration`). After every per-resume call, and on every `GET /api/jobs/[id]/progress`, the job is settled from its rows (`settledStatus` in `work.ts`): a job in `ANALYZING` with nothing remaining becomes `DONE`, or `ERROR` when every resume with text failed. Because the status is derived from what is saved, a run the browser abandoned, a retried call or calls finishing out of order still end in the right state. "Score anyway" sets the job back to `ANALYZING` before it runs and settles it after.
+
+Re-running a job whose resumes are all scored or set aside lists nothing, makes no model call and creates no row.
 
 **Pre-screen (`checkAts`, `src/lib/ats/check-ats.ts`).** A pure function over a resume's extracted text and its file facts. It calls no model and no network, so a resume it sets aside costs nothing. Every threshold and weight comes from `ATS_CONFIG` in `src/lib/config.ts`, which is validated before use (an invalid config throws an error naming the field).
 
@@ -149,12 +170,13 @@ Every route handler error has the body `{ "error": { "code": ..., "message": ...
 | `unauthorized` | 401 | No valid session |
 | `forbidden` | 403 | A state-changing request that did not come from this app's own pages |
 | `not_found` | 404 | No job or resume with this id, or row-level security hides it |
-| `conflict` | 409 | The job already holds 50 resumes; a resume id is already used for a different file; or the file to complete is not in storage yet |
+| `conflict` | 409 | The job already holds 50 resumes; a resume id is already used for a different file; the file to complete is not in storage yet; or "Score anyway" was asked for a resume that is already scored or was not set aside |
 | `payload_too_large` | 413 | The declared file size is over 5 MB |
 | `unsupported_media_type` | 415 | The declared file type is not PDF or DOCX |
 | `server_error` | 500 | A database call failed, or storage refused a call for a reason other than being busy |
 | `auth_unavailable` | 503 | Supabase Auth could not answer; try again |
 | `storage_unavailable` | 503 | Supabase Storage could not be reached, timed out, was rate limited or answered with a 5xx; sent with `Retry-After: 2` |
+| `model_busy` | 503 | AI Gateway rate-limited a model call; sent with `Retry-After` (the gateway's value, 1 to 60 seconds, 5 when it gives none). The resume is not marked failed |
 
 A file the server could read but not accept (empty, not really a PDF or DOCX, a Word file named `.pdf` or the other way round, damaged, password-protected, over a size, page or markup cap, or past the 8-second read deadline) is not an error response: `complete` answers 200 with `status: "failed"` and a message, and the row is saved as `failed`.
 
@@ -162,7 +184,7 @@ A file the server could read but not accept (empty, not really a PDF or DOCX, a 
 
 | Layer | Tool | Covers |
 |---|---|---|
-| Unit | Vitest (`npm run test`) | Files named `*.test.ts` beside the code they test: sign-in checks, the proxy rule and matcher, the page guard, the route-handler guard, the same-origin check, the signed-out route, `PATCH /api/jobs/[id]` (401, 403, 400, 404, 500 and success), the threshold editor's save sequencer, commit scheduler and fetch helper, the env check, the jobs queries against a stand-in client, the three resume routes (401, 503, 403, 400, 404, 409, 413, 415, 500, storage 503 and success, the per-job cap under concurrent requests, a repeated sign), the resumes queries, text extraction from generated PDF and DOCX fixtures (`test/fixtures.ts`) including oversized, mistyped, damaged and slow files, the real-type check, the zip reader's limits, the drop check, the upload queue (concurrency, back-off, retry, stop) and its worker, the browser fetch and storage helpers against stand-ins, and `scripts/check-backend-doc.test.ts` (the document check itself). No test calls the network |
+| Unit | Vitest (`npm run test`) | Files named `*.test.ts` beside the code they test: sign-in checks, the proxy rule and matcher, the page guard, the route-handler guard, the same-origin check, the signed-out route, `PATCH /api/jobs/[id]` (401, 403, 400, 404, 500 and success), the threshold editor's save sequencer, commit scheduler and fetch helper, the env check, the jobs queries against a stand-in client, the three resume routes (401, 503, 403, 400, 404, 409, 413, 415, 500, storage 503 and success, the per-job cap under concurrent requests, a repeated sign), the resumes queries, text extraction from generated PDF and DOCX fixtures (`test/fixtures.ts`) including oversized, mistyped, damaged and slow files, the real-type check, the zip reader's limits, the drop check, the upload queue (concurrency, back-off, retry, stop) and its worker, the browser fetch and storage helpers against stand-ins, the screening pipeline against an in-memory database that enforces the unique constraints (`test/fake-supabase.ts`) and the AI SDK's mock model (`test/screening-harness.ts`): a `NOT_ATS_READY` resume makes zero model calls, an overridden one is scored, a re-run makes no model call and no row, two simultaneous calls make one candidate, the candidate is saved as `NONE` with its email, failures racing a success, a 429 as `model_busy` without failing the resume, and the job settling to `DONE` or `ERROR`; the selection and progress rules (`work.ts`); the boundary check that only the pipeline imports the model calls; the four screening routes (401, 403, 400, 404, 409, 500, 503 and success); and `scripts/check-backend-doc.test.ts` (the document check itself). No test calls the network |
 | Document | `npm run docs:check` | This document names every route, server action, environment variable, `src/lib` and `src/app/api` folder, model and error code |
 | Design | `npm run design:contrast` | Every color pair in `src/app/globals.css` meets WCAG AA in both themes |
 

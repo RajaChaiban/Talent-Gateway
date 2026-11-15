@@ -12,8 +12,10 @@ type StoredRow<Row, Key extends keyof Row> = Omit<Row, Key> & {
 };
 
 type JobRow = Tables<"jobs">;
+type CandidateRow = Tables<"candidates">;
 
 export type Job = StoredRow<JobRow, "top_talent_threshold" | "invite_threshold">;
+export type Candidate = StoredRow<CandidateRow, "match_score">;
 
 export type JobListItem = Omit<Job, "description"> & { resume_count: number };
 
@@ -29,4 +31,9 @@ export function asJob(row: JobRow): Job {
 
 export function asJobListItem(row: ListRow, resumeCount: number): JobListItem {
   return { ...row, resume_count: resumeCount } as JobListItem;
+}
+
+/** A candidate row read on its own (the screening pipeline), with its score as stored tenths. */
+export function asCandidate(row: CandidateRow): Candidate {
+  return row as Candidate;
 }

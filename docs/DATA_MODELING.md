@@ -2,7 +2,7 @@
 
 The data model for talent-gateway on Supabase Postgres: four tables, one storage bucket, a single demo tenant. How the server uses these tables is in [BACKEND.md](BACKEND.md).
 
-**Status: applied.** The hosted database matches this file. Three migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`, then `job_status`, which stores the state of a job's analysis run again. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The `ats_*` columns and `run_id` are left at their defaults; `candidates` and `invitations` are not written yet.
+**Status: applied.** The hosted database matches this file. Three migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`, then `job_status`, which stores the state of a job's analysis run again. The app reads `jobs` and a resume count per job (the list on `/app`), inserts into `jobs` (the create-job form) and updates their thresholds (the job page). On the job page it also writes `resumes` and the `resumes` Storage bucket: the upload inserts a `pending` row, the browser stores the file, the server sets `extracted_text` and `status` (`extracted` or `failed`), and removing a resume deletes its file and then its row. The screening routes write the rest of the pipeline: `resumes.ats_status`, `ats_score` and `ats_reasons` (the ATS check), `resumes.ats_override` ("Score anyway"), `resumes.status` (`failed` when the analysis fails, back to `extracted` when it is retried), one `candidates` row per scored resume (always `invite_status = 'NONE'`, with `email` read from the resume), and `jobs.status` (the state of the analysis run). `run_id` is left at its default and `invitations` is not written yet. The `scored` value of `resumes.status` is allowed by the check constraint but never written: a resume counts as scored when it has a `candidates` row.
 
 Supabase plays the customer's existing system here: the system of record that the Vercel pieces connect to rather than replace.
 
@@ -52,7 +52,7 @@ Conventions: `uuid` primary keys with `gen_random_uuid()`, `timestamptz` with `d
 | `storage_path` | text | no | | `{job_id}/{resume_id}/{file_name}` in bucket `resumes`; unique |
 | `file_name` | text | no | | Original name, shown in the UI |
 | `extracted_text` | text | yes | | The text read from the file; the ATS check and scoring use it |
-| `status` | text | no | `'pending'` | check in `pending`, `extracted`, `scored`, `failed` |
+| `status` | text | no | `'pending'` | check in `pending`, `extracted`, `scored`, `failed`. `scored` is allowed but not written; "scored" is read from the candidate row. `failed` with `extracted_text` set is an analysis failure, without it an upload failure |
 | `ats_status` | text | yes | | check in `ATS_READY`, `NOT_ATS_READY`; null = not checked yet |
 | `ats_score` | int | yes | | check 0–100 |
 | `ats_reasons` | text[] | no | `'{}'` | Why it failed (empty when ready) |
@@ -77,7 +77,7 @@ Conventions: `uuid` primary keys with `gen_random_uuid()`, `timestamptz` with `d
 | `invite_status` | text | no | `'NONE'` | check in `NONE`, `APPROVED`, `SENT`, `FAILED` |
 | `created_at` | timestamptz | no | `now()` | |
 
-`unique (job_id, resume_id)` is the upsert key that makes a repeated scoring step safe: the second write updates the same row.
+`unique (job_id, resume_id)` is the upsert key that makes a repeated scoring step safe: the insert does nothing when the row exists, so the first saved score stands and a second call reads it.
 
 ### invitations
 
@@ -132,8 +132,11 @@ stateDiagram-v2
     extracted --> scored: checks pass, model scores it
     NOT_ATS_READY --> scored: "Score anyway"
     extracted --> failed: scoring failed after retries
+    failed --> extracted: the next run retries it
   }
 ```
+
+`NOT_ATS_READY` is `resumes.ats_status`, and `scored` means a `candidates` row exists; neither is written to `resumes.status`.
 
 ```mermaid
 stateDiagram-v2

@@ -8,6 +8,7 @@ export type ErrorCode =
   | "unsupported_media_type"
   | "payload_too_large"
   | "storage_unavailable"
+  | "model_busy"
   | "server_error";
 
 /**
