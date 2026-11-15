@@ -50,6 +50,13 @@ describe("decideRouteAccess when signed out", () => {
       decideRouteAccess({ method: "POST", pathname: "/app", search: "" }, false),
     ).toEqual({ action: "continue" });
   });
+
+  it("never redirects an API request; the route handler answers 401 itself", () => {
+    expect(
+      decideRouteAccess({ method: "PATCH", pathname: "/api/jobs/1", search: "" }, false),
+    ).toEqual({ action: "continue" });
+    expect(decideRouteAccess(get("/api/jobs/1"), false)).toEqual({ action: "continue" });
+  });
 });
 
 describe("decideRouteAccess when signed in", () => {

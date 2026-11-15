@@ -12,6 +12,8 @@ describe("proxy matcher", () => {
     "/app/jobs/1",
     "/app/x.png",
     "/login",
+    "/api/jobs/0b4d8f3e-6f0a-4c52-8d57-3a1f9b2c7e10",
+    "/api/jobs",
   ])("runs on %s", (url) => {
     expect(runsOn(url)).toBe(true);
   });
@@ -26,6 +28,7 @@ describe("proxy matcher", () => {
     "/_next/image?url=%2Flogo.png&w=64&q=75",
     "/application",
     "/auth/signed-out",
+    "/apis",
   ])("skips %s", (url) => {
     expect(runsOn(url)).toBe(false);
   });
