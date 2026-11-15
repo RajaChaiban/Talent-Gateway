@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 /*
  * Design tokens. The rules for using them are in AGENTS.md ("Hard rules").

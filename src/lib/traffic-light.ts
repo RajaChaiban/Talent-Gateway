@@ -6,3 +6,10 @@ export const lightClass: Record<TrafficLight, string> = {
   amber: "bg-status-amber",
   red: "bg-status-red",
 };
+
+/** The word shown beside the dot, so the status is never carried by color alone. */
+export const lightLabel: Record<TrafficLight, string> = {
+  green: "Strong match",
+  amber: "Possible match",
+  red: "Weak match",
+};

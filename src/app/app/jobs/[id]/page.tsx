@@ -3,12 +3,17 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LocalDate } from "@/components/jobs/local-date";
+import { JobStatusBadge } from "@/components/jobs/status-badge";
 import { requireSignedInUser } from "@/lib/auth/require-signed-in-user";
 import { APP_NAME } from "@/lib/config";
 import { resumeCountLabel } from "@/lib/jobs/helpers";
-import { getJob } from "@/lib/jobs/queries";
+import { getJobPage } from "@/lib/jobs/queries";
 import { jobIdSchema } from "@/lib/jobs/schemas";
 import { listResumes } from "@/lib/resumes/queries";
+import { loadWork } from "@/lib/screening/queries";
+import { resumesNeedingWork } from "@/lib/screening/work";
+import { AnalyzePanel } from "./analyze-panel";
+import { CandidatesSection } from "./candidates-section";
 import { ExpandableText } from "./expandable-text";
 import { JobThresholds } from "./job-thresholds";
 import { ResumesSection } from "./resumes-section";
@@ -18,7 +23,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * One job: its description, its two thresholds and its resumes.
+ * One job: its description, its two thresholds, its resumes, the Analyze
+ * panel and the ranked candidates.
  *
  * DECISION: the page checks the user itself, like every page under /app,
  * because the layout above it does not gate it. The job is read with the
@@ -31,11 +37,13 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
   const id = jobIdSchema.safeParse(rawId);
   if (!id.success) notFound();
 
-  const [job, resumes] = await Promise.all([
-    getJob(supabase, id.data),
+  const [page, resumes, work] = await Promise.all([
+    getJobPage(supabase, id.data),
     listResumes(supabase, id.data),
+    loadWork(supabase, id.data),
   ]);
-  if (!job) notFound();
+  if (!page) notFound();
+  const { job, candidates, notAtsReady, queued, counts } = page;
 
   return (
     <div className="flex w-full flex-col gap-10">
@@ -48,9 +56,12 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
           Jobs
         </Link>
         <h1 className="text-heading-24 break-words">{job.title}</h1>
-        <p className="text-label-14 text-muted-foreground">
-          Created <LocalDate iso={job.created_at} />
-        </p>
+        <div className="flex flex-wrap items-center gap-3 text-label-14 text-muted-foreground">
+          <JobStatusBadge status={job.status} />
+          <span>
+            Created <LocalDate iso={job.created_at} />
+          </span>
+        </div>
       </header>
 
       <section aria-labelledby="description-heading" className="flex flex-col gap-3">
@@ -84,6 +95,30 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
           </span>
         </div>
         <ResumesSection key={job.id} jobId={job.id} resumes={resumes} />
+      </section>
+
+      <section aria-labelledby="analyze-heading" className="flex flex-col gap-3">
+        <h2 id="analyze-heading" className="text-heading-20">
+          Analyze
+        </h2>
+        <AnalyzePanel
+          jobId={job.id}
+          jobStatus={job.status}
+          pending={resumesNeedingWork(work.rows, work.scored).length}
+        />
+      </section>
+
+      <section aria-labelledby="candidates-heading" className="flex flex-col gap-3">
+        <h2 id="candidates-heading" className="text-heading-20">
+          Candidates
+        </h2>
+        <CandidatesSection
+          candidates={candidates}
+          notAtsReady={notAtsReady}
+          queued={queued}
+          counts={counts}
+          topTalent={job.top_talent_threshold}
+        />
       </section>
     </div>
   );

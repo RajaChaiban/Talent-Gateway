@@ -1,6 +1,15 @@
 import type { ServerClient } from "@/lib/auth/verified-user";
+import { countResumes, rankCandidates, selectNotAtsReady, selectQueued } from "./helpers";
 import type { CreateJobInput, UpdateThresholdsInput } from "./schemas";
-import { asJob, asJobListItem, type Job, type JobListItem } from "./types";
+import {
+  asCandidate,
+  asJob,
+  asJobListItem,
+  asResumesForFilter,
+  type Job,
+  type JobListItem,
+  type JobPage,
+} from "./types";
 
 /** The most jobs the list returns. The demo never gets near it. */
 export const JOB_LIST_LIMIT = 100;
@@ -46,6 +55,40 @@ export async function getJob(supabase: Client, id: string): Promise<Job | null> 
   const { data, error } = await supabase.from("jobs").select().eq("id", id).maybeSingle();
   if (error) throw new JobsDataError("get job", error);
   return data ? asJob(data) : null;
+}
+
+const JOB_PAGE_RESUME_COLUMNS =
+  "id, file_name, ats_score, ats_reasons, created_at, ats_status, ats_override";
+
+/** Everything the job page shows below the resumes, from one read of the job's candidates and resumes. Null when no job has this id. */
+export async function getJobPage(supabase: Client, id: string): Promise<JobPage | null> {
+  const job = await getJob(supabase, id);
+  if (!job) return null;
+
+  const [candidates, resumes] = await Promise.all([
+    supabase.from("candidates").select().eq("job_id", id),
+    supabase
+      .from("resumes")
+      .select(JOB_PAGE_RESUME_COLUMNS)
+      .eq("job_id", id)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true }),
+  ]);
+  if (candidates.error || resumes.error) {
+    throw new JobsDataError("get job page", candidates.error ?? resumes.error);
+  }
+
+  const resumeRows = asResumesForFilter(resumes.data);
+  const candidateRows = candidates.data.map(asCandidate);
+  const scoredIds = new Set(candidateRows.map((candidate) => candidate.resume_id));
+
+  return {
+    job,
+    candidates: rankCandidates(candidateRows, resumeRows),
+    notAtsReady: selectNotAtsReady(resumeRows, scoredIds),
+    queued: selectQueued(resumeRows, scoredIds),
+    counts: countResumes(resumeRows, scoredIds),
+  };
 }
 
 /** Null when no job has this id. */

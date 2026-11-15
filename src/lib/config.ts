@@ -256,3 +256,19 @@ export const SCREENING_AI_LIMITS = {
   radarNoteMaxChars: 200,
   fullNameMaxChars: 120,
 } as const;
+
+/** The browser's Analyze queue. */
+export const ANALYZE_QUEUE_LIMITS = {
+  /** Per-resume analyze calls in flight at once. */
+  concurrency: 3,
+  /** Attempts per resume when the server answers 429 or 503 (or the network fails). */
+  maxAttempts: 5,
+  /** First back-off wait without a Retry-After header; doubles each attempt. */
+  backoffBaseMs: 1_000,
+  /** Longest single wait, Retry-After included. */
+  backoffMaxMs: 30_000,
+  /** At most one page refresh (new candidates) per this interval while running. */
+  refreshThrottleMs: 2_000,
+  /** At most one progress request per this interval while running. */
+  progressThrottleMs: 500,
+} as const;
