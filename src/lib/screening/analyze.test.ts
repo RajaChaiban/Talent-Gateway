@@ -70,6 +70,35 @@ describe("analyzeResume statuses", () => {
     expect(resumeRow(resume.id as string).ats_status).toBe("NOT_ATS_READY");
   });
 
+  it.each([
+    ["no email address", { extracted_text: READY_TEXT.replace("priya.natarajan@example.com", "email on request") }, /^No email address/],
+    ["no phone number", { extracted_text: READY_TEXT.replace("+44 20 7946 0000", "phone on request") }, /^No phone number/],
+    ["a picture", { image_count: 2 }, /^The file contains 2 pictures\./],
+  ])("sets aside an otherwise clean resume with %s, saying why, with zero model calls", async (_name, over, reason) => {
+    const resume = seedResume(db, job.id as string, over);
+    await expect(analyze(resume.id as string)).resolves.toBe("ats_failed");
+    const row = resumeRow(resume.id as string);
+    expect(row.ats_status).toBe("NOT_ATS_READY");
+    expect(row.ats_score as number).toBeGreaterThanOrEqual(60);
+    expect(row.ats_reasons).toEqual([expect.stringMatching(reason)]);
+    expect(model.count()).toBe(0);
+    expect(db.rows("candidates")).toHaveLength(0);
+  });
+
+  it("scores a resume with a picture once the recruiter overrides the gate", async () => {
+    const resume = seedResume(db, job.id as string, { image_count: 1, ats_override: true });
+    await expect(analyze(resume.id as string)).resolves.toBe("scored");
+    expect(model.count("score")).toBe(1);
+    expect(model.count("radar")).toBe(1);
+    expect(resumeRow(resume.id as string).ats_status).toBe("NOT_ATS_READY");
+  });
+
+  it("passes the picture check for a resume whose pictures were never counted", async () => {
+    const resume = seedResume(db, job.id as string, { image_count: null });
+    await expect(analyze(resume.id as string)).resolves.toBe("scored");
+    expect(resumeRow(resume.id as string)).toMatchObject({ ats_status: "ATS_READY", ats_score: 100 });
+  });
+
   it("scores an ATS-ready resume and saves the candidate with stored tenths", async () => {
     const resume = seedResume(db, job.id as string);
     await expect(analyze(resume.id as string)).resolves.toBe("scored");

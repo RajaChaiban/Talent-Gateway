@@ -20,6 +20,8 @@ export type ResumeForAnalysis = {
   job_id: string;
   file_name: string;
   extracted_text: string | null;
+  /** Pictures counted at extraction; null when not counted. */
+  image_count: number | null;
   status: string;
   ats_override: boolean;
 };
@@ -30,7 +32,7 @@ export async function getResumeForAnalysis(
 ): Promise<ResumeForAnalysis | null> {
   const { data, error } = await supabase
     .from("resumes")
-    .select("id, job_id, file_name, extracted_text, status, ats_override")
+    .select("id, job_id, file_name, extracted_text, image_count, status, ats_override")
     .eq("id", id)
     .maybeSingle();
   if (error) throw new JobsDataError("get resume", error);

@@ -30,7 +30,7 @@ const body = "text-copy-14 text-muted-foreground";
 const steps = [
   [
     "Instant Pre-Screening",
-    "Every incoming resume is automatically inspected for text readability, key sections, and contact information. Scanned images and corrupted files are flagged upfront.",
+    "Every incoming resume is automatically inspected for text readability, key sections, an email address, a phone number, and pictures. Scanned images, corrupted files, missing contact details and photos are flagged upfront.",
   ],
   [
     "Intelligent Candidate Scoring",

@@ -32,6 +32,31 @@ beforeEach(() => {
 
 const client = () => ({ from: () => table, storage }) as never;
 
+describe("completeUpload", () => {
+  it("saves the picture count together with the text", async () => {
+    extractText.mockResolvedValue({ text: "Avery Example", imageCount: 3 });
+
+    const result = await completeUpload(client(), resume);
+
+    expect(result).toEqual({ state: "done", status: "extracted", characters: 13 });
+    expect(table.update).toHaveBeenCalledWith({
+      status: "extracted",
+      extracted_text: "Avery Example",
+      image_count: 3,
+    });
+  });
+
+  it("saves a count it could not take as null", async () => {
+    extractText.mockResolvedValue({ text: "Avery Example", imageCount: null });
+    await completeUpload(client(), resume);
+    expect(table.update).toHaveBeenCalledWith({
+      status: "extracted",
+      extracted_text: "Avery Example",
+      image_count: null,
+    });
+  });
+});
+
 describe("completeUpload with a pathological file", () => {
   it("ends the row as failed with 'took too long' when the read times out, not left pending", async () => {
     extractText.mockRejectedValue(

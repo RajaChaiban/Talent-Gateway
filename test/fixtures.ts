@@ -2,18 +2,31 @@ import { crc32, deflateRawSync } from "node:zlib";
 
 const encoder = new TextEncoder();
 
-/** A one-page PDF whose content stream shows `lines`, one per row. Invented text only. */
-export function makePdf(lines: readonly string[]): Uint8Array {
+/**
+ * A one-page PDF whose content stream shows `lines`, one per row, and draws
+ * `images` separate one-pixel grey pictures below them. Invented text only.
+ */
+export function makePdf(lines: readonly string[], { images = 0 }: { images?: number } = {}): Uint8Array {
   const escape = (line: string) => line.replace(/[\\()]/g, (char) => `\\${char}`);
-  const stream = `BT /F1 12 Tf 14 TL 72 720 Td ${lines
+  const text = `BT /F1 12 Tf 14 TL 72 720 Td ${lines
     .map((line) => `(${escape(line)}) Tj T*`)
     .join(" ")} ET`;
+  const FIRST_IMAGE_OBJECT = 6;
+  const names = Array.from({ length: images }, (_, index) => `Im${index + 1}`);
+  const drawings = names.map((name, index) => ` q 20 0 0 20 ${72 + index * 30} 100 cm /${name} Do Q`);
+  const stream = text + drawings.join("");
+  const xObjects = names.map((name, index) => `/${name} ${FIRST_IMAGE_OBJECT + index} 0 R`).join(" ");
+  const resources = `<< /Font << /F1 5 0 R >>${images > 0 ? ` /XObject << ${xObjects} >>` : ""} >>`;
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources ${resources} >>`,
     `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ...names.map(
+      () =>
+        "<< /Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Length 1 >>\nstream\nA\nendstream",
+    ),
   ];
 
   let pdf = "%PDF-1.4\n";

@@ -1,3 +1,4 @@
+import { findPhoneNumbers, replacePhoneNumbers } from "@/lib/ats/phone";
 import { SCREENING_AI_LIMITS as LIMITS } from "@/lib/config";
 
 /**
@@ -72,19 +73,16 @@ export function scorePrompt(jobDescription: string, resumeText: string): string 
 }
 
 const EMAIL = /[\w.%+-]+@[\w-]+(?:\.[\w-]+)+/g;
-/** A run of digits, spaces and phone punctuation; a phone number when it holds 9 or more digits (dates such as "2015 - 2019" hold 8). */
-const PHONE_LIKE = /\+?\(?\d[\d\s().-]{6,}\d/g;
-const PHONE_MIN_DIGITS = 9;
 
 function digits(text: string): string {
   return text.replace(/\D/g, "");
 }
 
-/** Email addresses (lower case) and phone numbers (as digits) written in a resume. */
+/** Email addresses (lower case) and phone numbers (as digits, by the shared rule in `@/lib/ats/phone`) written in a resume. */
 export function contactDetails(text: string): { emails: string[]; phones: string[] } {
   return {
     emails: (text.match(EMAIL) ?? []).map((email) => email.toLowerCase()),
-    phones: (text.match(PHONE_LIKE) ?? []).map(digits).filter((d) => d.length >= PHONE_MIN_DIGITS),
+    phones: findPhoneNumbers(text),
   };
 }
 
@@ -102,11 +100,7 @@ export function quotesContactDetails(
 }
 
 function stripContactDetails(text: string): string {
-  return text
-    .replace(EMAIL, "[email removed]")
-    .replace(PHONE_LIKE, (match) =>
-      digits(match).length >= PHONE_MIN_DIGITS ? "[phone removed]" : match,
-    );
+  return replacePhoneNumbers(text.replace(EMAIL, "[email removed]"), "[phone removed]");
 }
 
 /**

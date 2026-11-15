@@ -13,6 +13,7 @@ export type Measured = {
   sizeKnown: boolean;
   sizeBytes: number;
   acceptableSize: boolean;
+  imageCount: number;
 };
 
 /**
@@ -84,7 +85,11 @@ export function reasonFor(id: AtsCheckId, m: Measured, config: AtsConfig): strin
         ? "No text could be read, so this looks like a scanned image or a broken file."
         : `Only ${plural(m.readableChars, "character")} of text could be read, so this looks like a scanned image or a broken file.`;
     case "contact_info":
-      return "No email address was found, so there is no way to contact this candidate from the resume.";
+      return "No email address was found in the text, so there is no way to email this candidate from the resume.";
+    case "phone":
+      return "No phone number was found in the text, so there is no way to call this candidate from the resume.";
+    case "picture":
+      return `The file contains ${plural(m.imageCount, "picture")}. A photo or graphic cannot be read by an applicant tracking system.`;
     case "standard_sections":
       return `Only ${m.sectionCount} of the standard sections (${config.requiredSections.join(", ")}) appear as headings; at least ${config.minSections} are expected.`;
     case "layout_noise":

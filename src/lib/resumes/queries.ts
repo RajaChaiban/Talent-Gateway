@@ -111,10 +111,14 @@ export async function getResume(
 }
 
 export type Completion =
-  | { status: "extracted"; extractedText: string }
+  | { status: "extracted"; extractedText: string; imageCount: number | null }
   | { status: "failed" };
 
-/** Saves the outcome. Returns false when no row was updated, because the resume was removed in the meantime. */
+/**
+ * Saves the outcome: the text and the picture count together, or no text for a
+ * failure (a failed row never had a count). Returns false when no row was updated, because the resume was
+ * removed in the meantime.
+ */
 export async function completeResume(
   supabase: Pick<ServerClient, "from">,
   id: string,
@@ -122,10 +126,11 @@ export async function completeResume(
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from("resumes")
-    .update({
-      status: completion.status,
-      extracted_text: completion.status === "extracted" ? completion.extractedText : null,
-    })
+    .update(
+      completion.status === "extracted"
+        ? { status: "extracted", extracted_text: completion.extractedText, image_count: completion.imageCount }
+        : { status: "failed", extracted_text: null },
+    )
     .eq("id", id)
     .select("id");
   if (error) throw new ResumesDataError("complete resume", error);

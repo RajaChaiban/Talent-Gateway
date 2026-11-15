@@ -34,6 +34,7 @@ const CELL_BASE = "└───────────────────�
 export const TWO_COLUMN_TABLE_RESUME = [
   "Marcus Oyelaran",
   "marcus.oyelaran@example.com",
+  "+44 20 7946 0002",
   CELL_RULE,
   "│ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ │",
   "│ EXPERIENCE               │ SKILLS                   │",
@@ -60,6 +61,7 @@ export const SCANNED_RESUME = "Scan 0001\n\n\u00A0\n  \f";
 export const ASCII_TABLE_RESUME = [
   "Tomas Eriksen",
   "tomas.eriksen@example.com",
+  "+44 20 7946 0003",
   "+------------------------+-----------------------+",
   "| EXPERIENCE             | SKILLS                |",
   "+========================+=======================+",

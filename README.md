@@ -17,7 +17,7 @@ Talent Gateway removes the slow, repetitive part (checking files and a first rea
 
 1. **Create a job.** Title, the pasted job description and two score thresholds (top talent and invite bar).
 2. **Upload resumes.** PDF or DOCX, up to 5 MB each. Files go straight to storage.
-3. **Pre-screen.** A rule-based check reads each file's text. A scanned image, a damaged file or a resume with too few standard sections is set aside on a "Not ATS-ready" tab with the reason. No model is called for it, so no money is spent on it.
+3. **Pre-screen.** A rule-based check reads each file's text. A scanned image, a damaged file, a resume with no email address, no phone number or a picture in it, or one that falls below the pass score (for example with too few standard sections) is set aside on a "Not ATS-ready" tab with the reason. No model is called for it, so no money is spent on it.
 4. **Score.** For every readable resume the AI returns a match score from 0.0 to 10.0, a short summary, strengths and gaps.
 5. **Radar.** The AI also flags four risks: copied text, employment gaps, frequent job changes and AI-written padding. Each flag carries a one-line note.
 6. **Rank.** Candidates appear best first with a green, amber or red light. The recruiter can override the check with "Score anyway" for a file that was set aside.

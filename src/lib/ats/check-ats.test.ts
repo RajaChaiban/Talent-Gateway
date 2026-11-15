@@ -19,9 +19,11 @@ const MB = 1024 * 1024;
 const CHECK_ORDER: AtsCheckId[] = [
   "readable_text",
   "contact_info",
+  "phone",
   "standard_sections",
   "layout_noise",
   "file",
+  "picture",
 ];
 
 /** Text with an email, two headings and `chars` characters once whitespace is collapsed. */
@@ -31,7 +33,7 @@ function textOfLength(chars: number): string {
 }
 
 function input(overrides: Partial<AtsInput> = {}): AtsInput {
-  return { text: CLEAN_RESUME, contentType: PDF, sizeBytes: 200_000, ...overrides };
+  return { text: CLEAN_RESUME, contentType: PDF, sizeBytes: 200_000, imageCount: 0, ...overrides };
 }
 
 function failed(result: AtsResult): AtsCheckId[] {
@@ -50,6 +52,7 @@ function inputFailing(ids: readonly AtsCheckId[]): AtsInput {
   const short = has("readable_text");
   const lines = [
     has("contact_info") ? "ada at example dot com" : "ada@example.com",
+    has("phone") ? "Phone on request" : "+44 20 7946 0000",
     has("standard_sections") ? "Roles\nStudies" : "Experience\nEducation\nSkills",
     "x".repeat(short ? 20 : 400),
   ];
@@ -57,15 +60,18 @@ function inputFailing(ids: readonly AtsCheckId[]): AtsInput {
   return input({
     text: lines.join("\n"),
     contentType: has("file") ? "image/png" : PDF,
+    imageCount: has("picture") ? 2 : 0,
   });
 }
 
 const failing: Record<AtsCheckId, AtsInput> = {
   readable_text: inputFailing(["readable_text"]),
   contact_info: inputFailing(["contact_info"]),
+  phone: inputFailing(["phone"]),
   standard_sections: inputFailing(["standard_sections"]),
   layout_noise: inputFailing(["layout_noise"]),
   file: inputFailing(["file"]),
+  picture: inputFailing(["picture"]),
 };
 
 describe("all checks pass", () => {
@@ -77,7 +83,7 @@ describe("all checks pass", () => {
     expect(failed(result)).toEqual([]);
   });
 
-  it("reports all five checks in a fixed order", () => {
+  it("reports all seven checks in a fixed order", () => {
     expect(checkAts(input()).checks.map((c) => c.id)).toEqual(CHECK_ORDER);
     expect(checkAts(input({ text: "" })).checks.map((c) => c.id)).toEqual(CHECK_ORDER);
   });
@@ -88,17 +94,26 @@ describe("all checks pass", () => {
 });
 
 describe("default weights and required checks", () => {
-  it("weights add up to 100, the pass mark is 60, and only readable_text and file are required", () => {
+  it("weights add up to 100, the pass mark is 60, and text, email, phone, file and picture are required", () => {
     expect(ATS_CONFIG.weights).toEqual({
-      readable_text: 22,
-      file: 15,
-      contact_info: 21,
-      standard_sections: 21,
-      layout_noise: 21,
+      readable_text: 15,
+      file: 5,
+      contact_info: 15,
+      phone: 10,
+      picture: 10,
+      standard_sections: 25,
+      layout_noise: 20,
     });
     expect(Object.values(ATS_CONFIG.weights).reduce((x, y) => x + y, 0)).toBe(100);
     expect(ATS_CONFIG.passScore).toBe(60);
-    expect(CHECK_ORDER.filter((id) => ATS_CONFIG.required[id])).toEqual(["readable_text", "file"]);
+    expect(ATS_CONFIG.maxImages).toBe(0);
+    expect(CHECK_ORDER.filter((id) => ATS_CONFIG.required[id])).toEqual([
+      "readable_text",
+      "contact_info",
+      "phone",
+      "file",
+      "picture",
+    ]);
   });
 
   it("exposes weight and required on every check", () => {
@@ -109,11 +124,13 @@ describe("default weights and required checks", () => {
   });
 
   it.each([
-    ["readable_text", 78, "NOT_ATS_READY"],
-    ["file", 85, "NOT_ATS_READY"],
-    ["contact_info", 79, "ATS_READY"],
-    ["standard_sections", 79, "ATS_READY"],
-    ["layout_noise", 79, "ATS_READY"],
+    ["readable_text", 85, "NOT_ATS_READY"],
+    ["file", 95, "NOT_ATS_READY"],
+    ["contact_info", 85, "NOT_ATS_READY"],
+    ["phone", 90, "NOT_ATS_READY"],
+    ["picture", 90, "NOT_ATS_READY"],
+    ["standard_sections", 75, "ATS_READY"],
+    ["layout_noise", 80, "ATS_READY"],
   ] as const)("failing only %s gives %i and %s", (id, score, status) => {
     const result = checkAts(failing[id]);
     expect(failed(result)).toEqual([id]);
@@ -123,16 +140,18 @@ describe("default weights and required checks", () => {
   });
 
   it.each([
-    [["readable_text", "contact_info"], 57, "NOT_ATS_READY"],
-    [["readable_text", "standard_sections"], 57, "NOT_ATS_READY"],
-    [["readable_text", "layout_noise"], 57, "NOT_ATS_READY"],
-    [["readable_text", "file"], 63, "NOT_ATS_READY"],
-    [["contact_info", "standard_sections"], 58, "NOT_ATS_READY"],
-    [["contact_info", "layout_noise"], 58, "NOT_ATS_READY"],
-    [["standard_sections", "layout_noise"], 58, "NOT_ATS_READY"],
-    [["contact_info", "file"], 64, "NOT_ATS_READY"],
-    [["standard_sections", "file"], 64, "NOT_ATS_READY"],
-    [["layout_noise", "file"], 64, "NOT_ATS_READY"],
+    [["readable_text", "contact_info"], 70, "NOT_ATS_READY"],
+    [["readable_text", "standard_sections"], 60, "NOT_ATS_READY"],
+    [["readable_text", "layout_noise"], 65, "NOT_ATS_READY"],
+    [["readable_text", "file"], 80, "NOT_ATS_READY"],
+    [["contact_info", "standard_sections"], 60, "NOT_ATS_READY"],
+    [["contact_info", "layout_noise"], 65, "NOT_ATS_READY"],
+    [["standard_sections", "layout_noise"], 55, "NOT_ATS_READY"],
+    [["contact_info", "file"], 80, "NOT_ATS_READY"],
+    [["standard_sections", "file"], 70, "NOT_ATS_READY"],
+    [["layout_noise", "file"], 75, "NOT_ATS_READY"],
+    [["contact_info", "phone"], 75, "NOT_ATS_READY"],
+    [["phone", "picture"], 80, "NOT_ATS_READY"],
   ] as const)("failing the pair %j gives %i and %s", (ids, score, status) => {
     const result = checkAts(inputFailing(ids));
     expect(failed(result)).toEqual(CHECK_ORDER.filter((id) => (ids as readonly string[]).includes(id)));
@@ -149,11 +168,11 @@ describe("default weights and required checks", () => {
   });
 
   it("all checks failing scores 0", () => {
-    const result = checkAts({ text: "▒", contentType: "image/png", sizeBytes: 10 * MB });
+    const result = checkAts({ text: "▒", contentType: "image/png", sizeBytes: 10 * MB, imageCount: 3 });
     expect(failed(result)).toEqual(CHECK_ORDER);
     expect(result.score).toBe(0);
     expect(result.status).toBe("NOT_ATS_READY");
-    expect(result.reasons).toHaveLength(5);
+    expect(result.reasons).toHaveLength(7);
   });
 });
 
@@ -231,6 +250,80 @@ describe("contact_info", () => {
   it("rejects an over-long local part window and domain", () => {
     expect(found(`${"a".repeat(30)}@${"b".repeat(64)}.com`)).toBe(0);
     expect(found(`a@${"b.".repeat(200)}com`)).toBe(0);
+  });
+});
+
+describe("required contact details", () => {
+  const withoutPhone = CLEAN_RESUME.replace("+44 20 7946 0000", "Phone on request");
+  const withoutEmail = CLEAN_RESUME.replace("priya.natarajan@example.com", "email on request");
+
+  it("sets aside a resume with no email address, whatever its score", () => {
+    const result = checkAts(input({ text: withoutEmail }));
+    expect(failed(result)).toEqual(["contact_info"]);
+    expect(result.score).toBeGreaterThanOrEqual(ATS_CONFIG.passScore);
+    expect(result.status).toBe("NOT_ATS_READY");
+    expect(result.reasons).toEqual([
+      "No email address was found in the text, so there is no way to email this candidate from the resume.",
+    ]);
+  });
+
+  it("sets aside a resume with no phone number, naming it in the reason", () => {
+    const result = checkAts(input({ text: withoutPhone }));
+    expect(failed(result)).toEqual(["phone"]);
+    expect(result.score).toBe(90);
+    expect(result.status).toBe("NOT_ATS_READY");
+    expect(result.reasons).toEqual([
+      "No phone number was found in the text, so there is no way to call this candidate from the resume.",
+    ]);
+  });
+
+  it("does not take date ranges for a phone number, even stacked on consecutive lines", () => {
+    // CLEAN_RESUME without its phone still has "2020 - present", "2016 - 2020" and "2012 - 2016".
+    expect(value(checkAts(input({ text: withoutPhone })), "phone")).toBe(0);
+    const stacked = `${withoutPhone}\nAcme (2019 - 2022)\n2017 - 2019\n2015 - 2017`;
+    expect(value(checkAts(input({ text: stacked })), "phone")).toBe(0);
+    expect(checkAts(input({ text: stacked })).status).toBe("NOT_ATS_READY");
+  });
+
+  it.each(["+1 555 010 0177", "(555) 010-0142", "+49 30 5550 0142", "555.010.0142 (mobile)"])(
+    "finds the phone number %j",
+    (phone) => {
+      const result = checkAts(input({ text: `${withoutPhone}\n${phone}` }));
+      expect(value(result, "phone")).toBe(1);
+      expect(result.status).toBe("ATS_READY");
+    },
+  );
+});
+
+describe("picture", () => {
+  it("passes a file with no pictures, and one whose pictures were not counted", () => {
+    expect(failed(checkAts(input({ imageCount: 0 })))).toEqual([]);
+    const uncounted = checkAts(input({ imageCount: null }));
+    expect(failed(uncounted)).toEqual([]);
+    expect(uncounted.status).toBe("ATS_READY");
+    expect(value(uncounted, "picture")).toBe(0);
+  });
+
+  it("sets aside a file holding one picture, with a singular reason", () => {
+    const result = checkAts(input({ imageCount: 1 }));
+    expect(failed(result)).toEqual(["picture"]);
+    expect(value(result, "picture")).toBe(1);
+    expect(result.status).toBe("NOT_ATS_READY");
+    expect(result.reasons).toEqual([
+      "The file contains 1 picture. A photo or graphic cannot be read by an applicant tracking system.",
+    ]);
+  });
+
+  it("gives the number of pictures in the reason", () => {
+    expect(checkAts(input({ imageCount: 2 })).reasons).toEqual([
+      "The file contains 2 pictures. A photo or graphic cannot be read by an applicant tracking system.",
+    ]);
+  });
+
+  it("follows the configured limit", () => {
+    const config: AtsConfig = { ...ATS_CONFIG, maxImages: 2 };
+    expect(failed(checkAts(input({ imageCount: 2 }), config))).toEqual([]);
+    expect(failed(checkAts(input({ imageCount: 3 }), config))).toEqual(["picture"]);
   });
 });
 
@@ -588,17 +681,19 @@ describe("file check", () => {
 
 describe("reasons", () => {
   it("come one per failed check in the fixed order", () => {
-    const result = checkAts({ text: "▒▒▒", contentType: "image/png", sizeBytes: 1 });
-    expect(result.reasons).toHaveLength(5);
+    const result = checkAts({ text: "▒▒▒", contentType: "image/png", sizeBytes: 1, imageCount: 1 });
+    expect(result.reasons).toHaveLength(7);
     expect(result.reasons[0]).toMatch(/^Only 3 characters of text/);
     expect(result.reasons[1]).toMatch(/^No email address/);
-    expect(result.reasons[2]).toMatch(/^Only 0 of the standard sections/);
-    expect(result.reasons[3]).toMatch(/^About 100% of the characters/);
-    expect(result.reasons[4]).toMatch(/^This file is not a PDF/);
+    expect(result.reasons[2]).toMatch(/^No phone number/);
+    expect(result.reasons[3]).toMatch(/^Only 0 of the standard sections/);
+    expect(result.reasons[4]).toMatch(/^About 100% of the characters/);
+    expect(result.reasons[5]).toMatch(/^This file is not a PDF/);
+    expect(result.reasons[6]).toMatch(/^The file contains 1 picture\./);
   });
 
   it("are plain sentences", () => {
-    for (const reason of checkAts({ text: "▒", contentType: "x", sizeBytes: 9 * MB }).reasons) {
+    for (const reason of checkAts({ text: "▒", contentType: "x", sizeBytes: 9 * MB, imageCount: 4 }).reasons) {
       expect(reason).toMatch(/^[A-Z].*\.$/);
     }
   });
@@ -676,7 +771,7 @@ describe("empty and whitespace-only text", () => {
   it.each(["", " ", "\n\n\n", " \t\r\n \u00A0 \u3000"])("fails readably for %j", (text) => {
     const result = checkAts(input({ text }));
     expect(result.status).toBe("NOT_ATS_READY");
-    expect(failed(result)).toEqual(["readable_text", "contact_info", "standard_sections"]);
+    expect(failed(result)).toEqual(["readable_text", "contact_info", "phone", "standard_sections"]);
     expect(value(result, "readable_text")).toBe(0);
     expect(Number.isFinite(value(result, "layout_noise"))).toBe(true);
   });
@@ -700,35 +795,51 @@ describe("config override", () => {
   });
 
   it("changed weights and pass mark change the score and status", () => {
-    const weights = { ...ATS_CONFIG.weights, contact_info: 30, readable_text: 13 };
-    const result = checkAts(failing.contact_info, { ...ATS_CONFIG, weights });
+    const weights = { ...ATS_CONFIG.weights, standard_sections: 34, layout_noise: 11 };
+    const result = checkAts(failing.standard_sections, { ...ATS_CONFIG, weights });
     expect(result.score).toBe(
-      weights.readable_text + weights.standard_sections + weights.layout_noise + weights.file,
+      weights.readable_text +
+        weights.contact_info +
+        weights.phone +
+        weights.layout_noise +
+        weights.file +
+        weights.picture,
     );
-    expect(result.score).toBe(70);
+    expect(result.score).toBe(66);
+    expect(result.status).toBe("ATS_READY");
     expect(checkAts(input(), { ...ATS_CONFIG, passScore: 100 }).status).toBe("ATS_READY");
-    expect(checkAts(failing.contact_info, { ...ATS_CONFIG, passScore: 80 }).status).toBe(
+    expect(checkAts(failing.standard_sections, { ...ATS_CONFIG, passScore: 80 }).status).toBe(
       "NOT_ATS_READY",
     );
   });
 
   it("with no required checks the status falls back to the score alone", () => {
-    const none = { contact_info: false, standard_sections: false, layout_noise: false, readable_text: false, file: false };
+    const none = {
+      contact_info: false,
+      phone: false,
+      standard_sections: false,
+      layout_noise: false,
+      readable_text: false,
+      file: false,
+      picture: false,
+    };
     const config = { ...ATS_CONFIG, required: none };
     expect(checkAts(failing.file, config).status).toBe("ATS_READY");
     expect(checkAts(failing.readable_text, config).status).toBe("ATS_READY");
-    expect(checkAts(inputFailing(["contact_info", "standard_sections"]), config).status).toBe(
+    expect(checkAts(failing.contact_info, config).status).toBe("ATS_READY");
+    expect(checkAts(failing.picture, config).status).toBe("ATS_READY");
+    expect(checkAts(inputFailing(["standard_sections", "layout_noise"]), config).status).toBe(
       "NOT_ATS_READY",
     );
   });
 
   it("marking another check required changes the outcome", () => {
-    const config = { ...ATS_CONFIG, required: { ...ATS_CONFIG.required, contact_info: true } };
-    expect(checkAts(failing.contact_info).status).toBe("ATS_READY");
-    const result = checkAts(failing.contact_info, config);
-    expect(result.score).toBe(79);
+    const config = { ...ATS_CONFIG, required: { ...ATS_CONFIG.required, standard_sections: true } };
+    expect(checkAts(failing.standard_sections).status).toBe("ATS_READY");
+    const result = checkAts(failing.standard_sections, config);
+    expect(result.score).toBe(75);
     expect(result.status).toBe("NOT_ATS_READY");
-    expect(result.checks.find((c) => c.id === "contact_info")?.required).toBe(true);
+    expect(result.checks.find((c) => c.id === "standard_sections")?.required).toBe(true);
   });
 
   it("a required check that is unmarked no longer blocks a passing score", () => {
@@ -785,7 +896,7 @@ describe("determinism", () => {
 
 describe("sample resumes", () => {
   it("a clean resume passes everything", () => {
-    const result = checkAts({ text: CLEAN_RESUME, contentType: PDF, sizeBytes: 180_000 });
+    const result = checkAts({ text: CLEAN_RESUME, contentType: PDF, sizeBytes: 180_000, imageCount: 0 });
     expect(result.status).toBe("ATS_READY");
     expect(result.score).toBe(100);
     expect(value(result, "standard_sections")).toBe(3);
@@ -793,12 +904,12 @@ describe("sample resumes", () => {
   });
 
   it("a two-column table export is not ATS-ready, with the noise and sections reasons", () => {
-    const result = checkAts({ text: TWO_COLUMN_TABLE_RESUME, contentType: DOCX, sizeBytes: 90_000 });
+    const result = checkAts({ text: TWO_COLUMN_TABLE_RESUME, contentType: DOCX, sizeBytes: 90_000, imageCount: 0 });
     expect(value(result, "readable_text")).toBeGreaterThanOrEqual(300);
     expect(value(result, "contact_info")).toBe(1);
     expect(value(result, "layout_noise")).toBeGreaterThan(0.15);
     expect(failed(result)).toEqual(["standard_sections", "layout_noise"]);
-    expect(result.score).toBe(58);
+    expect(result.score).toBe(55);
     expect(result.status).toBe("NOT_ATS_READY");
     expect(result.reasons).toHaveLength(2);
     expect(result.reasons[0]).toMatch(/^Only \d of the standard sections/);
@@ -806,7 +917,7 @@ describe("sample resumes", () => {
   });
 
   it("a pipe-and-dash ASCII table export fails layout noise", () => {
-    const result = checkAts({ text: ASCII_TABLE_RESUME, contentType: PDF, sizeBytes: 60_000 });
+    const result = checkAts({ text: ASCII_TABLE_RESUME, contentType: PDF, sizeBytes: 60_000, imageCount: 0 });
     expect(value(result, "readable_text")).toBeGreaterThanOrEqual(300);
     expect(value(result, "contact_info")).toBe(1);
     expect(value(result, "layout_noise")).toBeGreaterThan(0.15);
@@ -815,7 +926,7 @@ describe("sample resumes", () => {
   });
 
   it("a clean resume full of C++, C#, URLs, phone numbers, percentages, ampersands and dotted leaders passes", () => {
-    const result = checkAts({ text: RICH_CLEAN_RESUME, contentType: PDF, sizeBytes: 120_000 });
+    const result = checkAts({ text: RICH_CLEAN_RESUME, contentType: PDF, sizeBytes: 120_000, imageCount: 0 });
     expect(failed(result)).toEqual([]);
     expect(value(result, "layout_noise")).toBeLessThan(0.1);
     expect(value(result, "standard_sections")).toBe(3);
@@ -824,9 +935,9 @@ describe("sample resumes", () => {
   });
 
   it("a scanned resume with almost no text is not ATS-ready", () => {
-    const result = checkAts({ text: SCANNED_RESUME, contentType: PDF, sizeBytes: 3 * MB });
+    const result = checkAts({ text: SCANNED_RESUME, contentType: PDF, sizeBytes: 3 * MB, imageCount: 1 });
     expect(result.status).toBe("NOT_ATS_READY");
-    expect(failed(result)).toEqual(["readable_text", "contact_info", "standard_sections"]);
+    expect(failed(result)).toEqual(["readable_text", "contact_info", "phone", "standard_sections", "picture"]);
     expect(result.reasons[0]).toBe(
       "Only 9 characters of text could be read, so this looks like a scanned image or a broken file.",
     );
@@ -843,7 +954,7 @@ describe("performance and hostile input", () => {
     const runs: number[] = [];
     for (let i = 0; i < 5; i += 1) {
       const start = performance.now();
-      checkAts({ text, contentType: PDF, sizeBytes: text.length });
+      checkAts({ text, contentType: PDF, sizeBytes: text.length, imageCount: 0 });
       runs.push(performance.now() - start);
     }
     runs.sort((a, b) => a - b);
@@ -912,10 +1023,11 @@ describe("config safety", () => {
   }
 
   it("rejects weights that do not add up to 100, naming the problem", () => {
-    expect(() => checkAts(input(), withWeights({ file: 24 }))).toThrow(
+    expect(() => checkAts(input(), withWeights({ file: 14 }))).toThrow(
       "Invalid ATS config: weights must add up to 100, but add up to 109.",
     );
-    expect(() => checkAts(input(), withWeights({ file: 5 }))).toThrow(/add up to 90/);
+    expect(() => checkAts(input(), withWeights({ standard_sections: 15 }))).toThrow(/add up to 90/);
+    expect(() => checkAts(input(), withWeights({ picture: 0 }))).toThrow(/add up to 90/);
   });
 
   it("rejects a negative, NaN, infinite or missing weight, naming the field", () => {
@@ -941,6 +1053,29 @@ describe("config safety", () => {
     expect(() => checkAts(input(), missing)).toThrow(
       "Invalid ATS config: required.file must be true or false.",
     );
+    const noPhone = Object.fromEntries(Object.entries(ATS_CONFIG.required).filter(([id]) => id !== "phone"));
+    expect(() => checkAts(input(), { ...ATS_CONFIG, required: noPhone } as unknown as AtsConfig)).toThrow(
+      "Invalid ATS config: required.phone must be true or false.",
+    );
+  });
+
+  it("rejects a missing picture weight, naming the field", () => {
+    const rest = Object.fromEntries(Object.entries(ATS_CONFIG.weights).filter(([id]) => id !== "picture"));
+    const missing = { ...ATS_CONFIG, weights: rest } as unknown as AtsConfig;
+    expect(() => checkAts(input(), missing)).toThrow(
+      "Invalid ATS config: weights.picture must be a finite number.",
+    );
+  });
+
+  it("rejects a picture limit that is not a whole number of zero or more, naming the field", () => {
+    expect(() => checkAts(input(), { ...ATS_CONFIG, maxImages: 0.5 })).toThrow(
+      "Invalid ATS config: maxImages must be a whole number.",
+    );
+    expect(() => checkAts(input(), { ...ATS_CONFIG, maxImages: -1 })).toThrow(
+      /^Invalid ATS config: maxImages must be between 0 and/,
+    );
+    const missing = { ...ATS_CONFIG, maxImages: undefined } as unknown as AtsConfig;
+    expect(() => checkAts(input(), missing)).toThrow("Invalid ATS config: maxImages must be a finite number.");
   });
 
   it.each([
@@ -954,6 +1089,9 @@ describe("config safety", () => {
     ["maxSymbolRatio", { maxSymbolRatio: Number.NaN }],
     ["maxFileBytes", { maxFileBytes: Number.NaN }],
     ["maxHeadingChars", { maxHeadingChars: 0 }],
+    ["maxImages", { maxImages: Number.NaN }],
+    ["maxImages", { maxImages: -1 }],
+    ["maxImages", { maxImages: 1.5 }],
   ])("rejects an invalid %s", (field, override) => {
     expect(() => checkAts(input(), { ...ATS_CONFIG, ...override })).toThrow(
       new RegExp(`Invalid ATS config: ${field} must`),
@@ -966,7 +1104,15 @@ describe("config safety", () => {
       passScore: 0,
       maxSymbolRatio: 1,
       minTextChars: 0,
-      weights: { readable_text: 0, file: 0, contact_info: 0, standard_sections: 0, layout_noise: 100 },
+      weights: {
+        readable_text: 0,
+        file: 0,
+        contact_info: 0,
+        phone: 0,
+        picture: 0,
+        standard_sections: 0,
+        layout_noise: 100,
+      },
     };
     expect(checkAts(input({ text: "" }), edge).score).toBe(100);
     expect(checkAts(input({ text: "" }), edge).score).toBe(100);
@@ -982,7 +1128,7 @@ describe("unexpected runtime input", () => {
     expect(result.status).toBe("NOT_ATS_READY");
     expect(failed(result)).toContain("readable_text");
     expect(result.reasons[0]).toBe("No text was provided for this resume, so it cannot be checked.");
-    expect(result.checks).toHaveLength(5);
+    expect(result.checks).toHaveLength(7);
   });
 
   it.each([null, undefined, 7, {}])("a content type of %j fails the file check", (contentType) => {
@@ -998,11 +1144,21 @@ describe("unexpected runtime input", () => {
     expect(result.reasons).toEqual(["This file has an unknown size."]);
   });
 
-  it("everything wrong at once still returns five checks", () => {
-    const result = bad({ text: null, contentType: null, sizeBytes: null });
+  it.each([null, undefined, -1, Number.NaN, "2", {}])(
+    "a picture count of %j is treated as not counted and passes the picture check",
+    (imageCount) => {
+      const result = bad({ imageCount });
+      expect(failed(result)).toEqual([]);
+      expect(value(result, "picture")).toBe(0);
+    },
+  );
+
+  it("everything wrong at once still returns seven checks", () => {
+    const result = bad({ text: null, contentType: null, sizeBytes: null, imageCount: null });
     expect(result.status).toBe("NOT_ATS_READY");
-    expect(result.score).toBe(0 + 21);
-    expect(result.reasons).toHaveLength(4);
+    expect(result.checks).toHaveLength(7);
+    expect(result.score).toBe(ATS_CONFIG.weights.layout_noise + ATS_CONFIG.weights.picture);
+    expect(result.reasons).toHaveLength(5);
   });
 
   it("a text of null bytes has no readable characters", () => {
@@ -1020,7 +1176,7 @@ describe("database columns", () => {
     const result = checkAts(failing.file);
     expect(toAtsColumns(result)).toEqual({
       ats_status: "NOT_ATS_READY",
-      ats_score: 85,
+      ats_score: 95,
       ats_reasons: ["This file is not a PDF or Word (DOCX) document."],
     });
   });

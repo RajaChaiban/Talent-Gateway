@@ -48,6 +48,9 @@ export type ZipLimits = {
 
 export type ZipPart = { name: Uint8Array; data: Uint8Array };
 
+/** What a checked archive holds: its markup parts, and the raw name of every entry in directory order. */
+export type ZipContents = { parts: ZipPart[]; names: Uint8Array[] };
+
 type Entry = {
   name: Uint8Array;
   method: number;
@@ -152,8 +155,11 @@ function isMarkup(data: Uint8Array): boolean {
  * - Markup entries together may hold at most `markupBytes`. Entries that do not
  *   start like XML (images, fonts) are checked and dropped, so a parser given
  *   the result cannot read them, whatever the document's relationships name.
+ * - The names of all entries, markup or not, are returned only once every
+ *   entry has passed these checks, so a caller that counts entries (pictures)
+ *   never sees an archive the limits refused.
  */
-export function readZipParts(bytes: Uint8Array, limits: ZipLimits): ZipPart[] {
+export function readZipParts(bytes: Uint8Array, limits: ZipLimits): ZipContents {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const entries = readEntries(bytes, limits.entries);
 
@@ -169,7 +175,7 @@ export function readZipParts(bytes: Uint8Array, limits: ZipLimits): ZipPart[] {
     if (markupBytes > limits.markupBytes) throw new ZipTooLargeError("Markup over the limit");
     parts.push({ name: entry.name, data });
   }
-  return parts;
+  return { parts, names: entries.map((entry) => entry.name) };
 }
 
 /** A zip archive holding `parts` uncompressed, for a parser that only takes an archive. */

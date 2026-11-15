@@ -94,8 +94,8 @@ async function scoreAndSave(
  * 1. Load the resume and its job (null when the resume does not exist).
  * 2. A resume that already has a candidate is `scored` with no model call.
  * 3. No extracted text: `not_extracted`.
- * 4. Run `checkAts` and save the result; the gate is read back from the saved
- *    row. NOT_ATS_READY without `ats_override`: `ats_failed`, no model call.
+ * 4. Run `checkAts` (with the picture count saved at extraction) and save the
+ *    result; the gate is read back from the saved row. NOT_ATS_READY without `ats_override`: `ats_failed`, no model call.
  * 5. Score and Radar, then save the candidate (one per resume; a racing call
  *    reads the winner's row) with `invite_status = 'NONE'` whatever its score,
  *    and the first email address in the resume (null when there is none).
@@ -126,7 +126,7 @@ export async function analyzeResume(
   const text = resume.extracted_text;
   if (text === null) return result("not_extracted");
 
-  const ats = checkAts({ text, ...fileFacts(resume.file_name) });
+  const ats = checkAts({ text, imageCount: resume.image_count, ...fileFacts(resume.file_name) });
   const gate = await saveAtsResult(supabase, resume.id, toAtsColumns(ats));
   if (gate.ats_status !== "ATS_READY" && !gate.ats_override) return result("ats_failed");
 

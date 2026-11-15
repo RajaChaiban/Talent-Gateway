@@ -9,9 +9,11 @@ import {
   paragraphXml,
 } from "../../../test/fixtures";
 import {
+  docxImageCount,
   docxParts,
   ExtractionError,
   extractText,
+  imagePaintOps,
   normalizeText,
   readPdfPages,
   REASONS,
@@ -25,21 +27,30 @@ await Promise.all([import("mammoth"), import("unpdf")]);
 
 describe("extractText", () => {
   it("reads the text of a PDF", async () => {
-    const text = await extractText(
+    const { text, imageCount } = await extractText(
       makePdf(["Avery Example", "Backend engineer with six years of experience"]),
       "pdf",
     );
     expect(text).toContain("Avery Example");
     expect(text).toContain("Backend engineer with six years of experience");
+    expect(imageCount).toBe(0);
   });
 
   it("reads the paragraphs of a DOCX", async () => {
-    const text = await extractText(makeDocx(["Sam Sample", "Skills: TypeScript & SQL"]), "docx");
+    const { text, imageCount } = await extractText(makeDocx(["Sam Sample", "Skills: TypeScript & SQL"]), "docx");
     expect(text).toBe("Sam Sample\n\nSkills: TypeScript & SQL");
+    expect(imageCount).toBe(0);
   });
 
   it("returns an empty string for a PDF with no text", async () => {
-    await expect(extractText(makePdf([]), "pdf")).resolves.toBe("");
+    await expect(extractText(makePdf([]), "pdf")).resolves.toEqual({ text: "", imageCount: 0 });
+  });
+
+  it("counts the pictures a PDF draws, and still reads its text", async () => {
+    const one = await extractText(makePdf(["Avery Example"], { images: 1 }), "pdf");
+    expect(one).toEqual({ text: "Avery Example", imageCount: 1 });
+    const three = await extractText(makePdf(["Avery Example"], { images: 3 }), "pdf");
+    expect(three.imageCount).toBe(3);
   });
 
   it("fails a corrupt PDF with a readable reason", async () => {
@@ -69,7 +80,8 @@ describe("normalizeText", () => {
 });
 
 describe("the time guard", () => {
-  const slow: TextReader = () => new Promise((resolve) => setTimeout(() => resolve("late"), 200));
+  const slow: TextReader = () =>
+    new Promise((resolve) => setTimeout(() => resolve({ text: "late", imageCount: 0 }), 200));
 
   it("abandons a slow read after the timeout and says it took too long", async () => {
     await expect(extractText(new Uint8Array([1]), "pdf", { timeoutMs: 20, reader: slow })).rejects.toMatchObject({
@@ -78,38 +90,97 @@ describe("the time guard", () => {
     });
   });
 
-  it("returns the text of a read that finishes in time", async () => {
-    const quick: TextReader = async () => "  fine  ";
-    await expect(extractText(new Uint8Array([1]), "pdf", { reader: quick })).resolves.toBe("fine");
+  it("returns the text and picture count of a read that finishes in time", async () => {
+    const quick: TextReader = async () => ({ text: "  fine  ", imageCount: 2 });
+    await expect(extractText(new Uint8Array([1]), "pdf", { reader: quick })).resolves.toEqual({
+      text: "fine",
+      imageCount: 2,
+    });
   });
 });
 
 describe("readPdfPages", () => {
-  const pages = (count: number, delayMs = 0): PdfLike => ({
+  /** Stand-in operator codes: 85 paints an image, 44 shows text. */
+  const PAINT = 85;
+  const SHOW_TEXT = 44;
+  const IMAGE_OPS = new Set([PAINT]);
+  const pages = (count: number, delayMs = 0, fnArray: number[] = [SHOW_TEXT]): PdfLike => ({
     numPages: count,
     getPage: async () => {
       if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
-      return { getTextContent: async () => ({ items: [{ str: "text", hasEOL: true }] }) };
+      return {
+        getTextContent: async () => ({ items: [{ str: "text", hasEOL: true }] }),
+        getOperatorList: async () => ({ fnArray }),
+      };
     },
   });
 
   it("joins pages and keeps line ends", async () => {
-    await expect(readPdfPages(pages(2), Date.now() + 1000)).resolves.toBe("text\n\n\ntext\n");
+    await expect(readPdfPages(pages(2), Date.now() + 1000, IMAGE_OPS)).resolves.toEqual({
+      text: "text\n\n\ntext\n",
+      imageCount: 0,
+    });
+  });
+
+  it("counts every image-painting operation on every page", async () => {
+    const result = await readPdfPages(pages(3, 0, [SHOW_TEXT, PAINT, SHOW_TEXT, PAINT]), Date.now() + 1000, IMAGE_OPS);
+    expect(result.imageCount).toBe(6);
   });
 
   it("refuses a PDF with too many pages before reading any", async () => {
     const getPage = vi.fn();
     await expect(
-      readPdfPages({ numPages: RESUME_LIMITS.maxPdfPages + 1, getPage }, Date.now() + 1000),
+      readPdfPages({ numPages: RESUME_LIMITS.maxPdfPages + 1, getPage }, Date.now() + 1000, IMAGE_OPS),
     ).rejects.toMatchObject({ failure: "too_complex" });
     expect(getPage).not.toHaveBeenCalled();
   });
 
   it("stops at the deadline between pages instead of reading on", async () => {
-    await expect(readPdfPages(pages(RESUME_LIMITS.maxPdfPages, 15), Date.now() + 40)).rejects.toMatchObject({
+    await expect(
+      readPdfPages(pages(RESUME_LIMITS.maxPdfPages, 15), Date.now() + 40, IMAGE_OPS),
+    ).rejects.toMatchObject({
       failure: "timeout",
       reason: "Reading the file took too long.",
     });
+  });
+
+  it("fails the whole read as unreadable when a page's pictures cannot be counted", async () => {
+    const broken: PdfLike = {
+      numPages: 1,
+      getPage: async () => ({
+        getTextContent: async () => ({ items: [{ str: "text", hasEOL: true }] }),
+        getOperatorList: async () => {
+          throw new Error("bad content stream");
+        },
+      }),
+    };
+    const reader: TextReader = (_bytes, deadline) => readPdfPages(broken, deadline, IMAGE_OPS);
+    await expect(extractText(new Uint8Array([1]), "pdf", { reader })).rejects.toMatchObject({
+      failure: "unreadable",
+      reason: REASONS.unreadable,
+    });
+  });
+});
+
+describe("imagePaintOps", () => {
+  it("takes every picture-painting operation from the pdf.js table and leaves out the solid-fill mask", async () => {
+    const { getResolvedPDFJS } = await import("unpdf");
+    const { OPS } = await getResolvedPDFJS();
+    const ops = imagePaintOps(OPS);
+    expect([...ops].toSorted((a, b) => a - b)).toEqual(
+      [
+        OPS.paintImageXObject,
+        OPS.paintImageXObjectRepeat,
+        OPS.paintInlineImageXObject,
+        OPS.paintInlineImageXObjectGroup,
+        OPS.paintImageMaskXObject,
+        OPS.paintImageMaskXObjectGroup,
+        OPS.paintImageMaskXObjectRepeat,
+      ].toSorted((a, b) => a - b),
+    );
+    expect(ops.size).toBe(7);
+    expect(ops.has(OPS.paintSolidColorImageMask)).toBe(false);
+    expect(ops.has(OPS.showText)).toBe(false);
   });
 });
 
@@ -117,7 +188,7 @@ describe("DOCX limits", () => {
   const LIMITS = { entries: 10, markupBytes: 100_000, totalBytes: 1_000_000 };
   const text = (value: string) => new TextEncoder().encode(value);
   const names = (bytes: Uint8Array, limits = LIMITS) =>
-    docxParts(bytes, limits).map((part) => new TextDecoder().decode(part.name));
+    docxParts(bytes, limits).parts.map((part) => new TextDecoder().decode(part.name));
   /** Markup of about `bytes` bytes that deflates to almost nothing. */
   const markup = (bytes: number) => text("<w:p/>".repeat(Math.ceil(bytes / 6)));
   const failure = (bytes: Uint8Array, limits = LIMITS) => {
@@ -287,9 +358,10 @@ describe("what reaches the Word parser", () => {
       },
       { name: "word/media/image1.png", data: picture(700_000) },
     ]);
-    const text = await extractText(docx, "docx");
+    const { text, imageCount } = await extractText(docx, "docx");
     expect(text).toContain("Sam Sample");
     expect(text).toContain("Engineer");
+    expect(imageCount).toBe(1);
   });
 
   it("cannot be pointed at a large entry dressed as a picture", async () => {
@@ -300,15 +372,53 @@ describe("what reaches the Word parser", () => {
       { name: "word/document.xml", data: documentXml("") },
       { name: "word/media/image1.png", data: hidden, deflate: true },
     ]);
-    const text = await extractText(docx, "docx");
+    const { text, imageCount } = await extractText(docx, "docx");
     expect(text).toBe("");
+    expect(imageCount).toBe(1);
   });
 
   it("rebuilds an archive that reads back to the same parts", async () => {
     const { readZipParts, storedZip } = await import("./zip-inflate");
     const limits = { entries: 10, markupBytes: 100_000, totalBytes: 100_000 };
-    const parts = readZipParts(makeDocx(["Sam Sample", "Ünïcode"]), limits);
+    const { parts } = readZipParts(makeDocx(["Sam Sample", "Ünïcode"]), limits);
     const again = readZipParts(storedZip(parts), limits);
-    expect(again).toEqual(parts);
+    expect(again.parts).toEqual(parts);
+  });
+});
+
+describe("DOCX picture count", () => {
+  const LIMITS = { entries: 10, markupBytes: 100_000, totalBytes: 1_000_000 };
+  const bytes = (count: number) => new Uint8Array(count).fill(0x5a);
+  const docxWith = (media: readonly string[]) =>
+    makeZip([
+      ...packageEntries(),
+      { name: "word/document.xml", data: documentXml(paragraphXml("Sam Sample")) },
+      ...media.map((name) => ({ name, data: bytes(500), deflate: true })),
+    ]);
+
+  it("counts the files under word/media/", async () => {
+    const docx = docxWith(["word/media/image1.png", "word/media/image2.jpeg"]);
+    expect(docxImageCount(docxParts(docx, LIMITS))).toBe(2);
+    await expect(extractText(docx, "docx")).resolves.toEqual({ text: "Sam Sample", imageCount: 2 });
+  });
+
+  it("is zero for a DOCX with no media folder", () => {
+    expect(docxImageCount(docxParts(makeDocx(["Sam Sample"]), LIMITS))).toBe(0);
+  });
+
+  it("ignores folder entries, files elsewhere and look-alike folders, and any letter case", () => {
+    const docx = docxWith([
+      "word/media/",
+      "Word/Media/photo.PNG",
+      "word/mediafiles/logo.png",
+      "media/image1.png",
+      "word/embeddings/sheet.bin",
+    ]);
+    expect(docxImageCount(docxParts(docx, LIMITS))).toBe(1);
+  });
+
+  it("does not count anything when the archive breaks a limit", () => {
+    const many = docxWith(Array.from({ length: 10 }, (_, index) => `word/media/image${index}.png`));
+    expect(() => docxParts(many, LIMITS)).toThrowError(expect.objectContaining({ failure: "too_complex" }));
   });
 });

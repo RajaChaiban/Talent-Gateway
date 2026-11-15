@@ -81,6 +81,20 @@ describe("POST /api/resumes/[id]/complete", () => {
     expect(table.update).toHaveBeenCalledWith({
       status: "extracted",
       extracted_text: expect.stringContaining("Avery Example"),
+      image_count: 0,
+    });
+  });
+
+  it("saves the number of pictures with the text", async () => {
+    bucket.download.mockResolvedValue(file(makePdf(["Avery Example", "Engineer"], { images: 2 })));
+
+    const response = await call();
+
+    expect(response.status).toBe(200);
+    expect(table.update).toHaveBeenCalledWith({
+      status: "extracted",
+      extracted_text: expect.stringContaining("Avery Example"),
+      image_count: 2,
     });
   });
 
@@ -217,6 +231,7 @@ describe("POST /api/resumes/[id]/complete", () => {
     expect(table.update).toHaveBeenCalledWith({
       status: "extracted",
       extracted_text: expect.stringContaining("Avery Example"),
+      image_count: 0,
     });
   });
 
