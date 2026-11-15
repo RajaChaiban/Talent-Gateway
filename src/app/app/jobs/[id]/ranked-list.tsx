@@ -7,11 +7,12 @@ import { CandidateRow } from "./candidate-row";
 type Props = {
   candidates: RankedCandidate[];
   topTalent: StoredScore;
+  jobTitle: string;
   openId: string | null;
   onToggle: (id: string) => void;
 };
 
-export function RankedList({ candidates, topTalent, openId, onToggle }: Props) {
+export function RankedList({ candidates, topTalent, jobTitle, openId, onToggle }: Props) {
   return (
     <ol className="flex flex-col gap-2" aria-label="Candidates, best match first">
       {candidates.map((candidate) => (
@@ -19,6 +20,7 @@ export function RankedList({ candidates, topTalent, openId, onToggle }: Props) {
           key={candidate.id}
           candidate={candidate}
           topTalent={topTalent}
+          jobTitle={jobTitle}
           open={openId === candidate.id}
           onToggle={() => onToggle(candidate.id)}
         />

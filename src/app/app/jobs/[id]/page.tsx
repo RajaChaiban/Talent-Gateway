@@ -118,6 +118,7 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
           queued={queued}
           counts={counts}
           topTalent={job.top_talent_threshold}
+          jobTitle={job.title}
         />
       </section>
     </div>

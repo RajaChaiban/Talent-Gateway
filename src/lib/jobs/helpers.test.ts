@@ -10,7 +10,7 @@ import {
   sortCandidates,
 } from "./helpers";
 import { asStored } from "@/lib/score";
-import type { Candidate, ResumeForFilter } from "./types";
+import type { Candidate, CandidateWithInvitation, ResumeForFilter } from "./types";
 
 function candidate(id: string, match_score: number, created_at: string): Candidate {
   return {
@@ -140,8 +140,9 @@ describe("counts identity", () => {
 });
 
 describe("rankCandidates", () => {
-  const row = (id: string, over: Partial<Candidate>): Candidate => ({
+  const row = (id: string, over: Partial<CandidateWithInvitation>): CandidateWithInvitation => ({
     ...candidate(id, 70, "2026-01-01T00:00:00Z"),
+    invitations: null,
     ...over,
   });
   const files = [resume("high", {}), resume("low", {})];
@@ -158,6 +159,24 @@ describe("rankCandidates", () => {
     expect(first?.resume_file_name).toBe("high.pdf");
     expect(second?.id).toBe("low");
     expect(second?.resume_file_name).toBe("low.pdf");
+  });
+
+  it("attaches each candidate's invitation, or null when it has none", () => {
+    const invitation = {
+      sent_to: "priya@example.com",
+      sent_at: "2026-11-15T10:00:05.000Z",
+      approved_at: "2026-11-15T10:00:00.000Z",
+    };
+    const [invited, other] = rankCandidates(
+      [
+        row("high", { match_score: asStored(90), resume_id: "high", invitations: invitation }),
+        row("low", { match_score: asStored(40) }),
+      ],
+      files,
+    );
+    expect(invited?.invitation).toEqual(invitation);
+    expect(invited).not.toHaveProperty("invitations");
+    expect(other?.invitation).toBeNull();
   });
 
   it("tolerates empty or malformed radar results", () => {

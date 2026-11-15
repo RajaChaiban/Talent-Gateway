@@ -15,6 +15,7 @@ type StoredRow<Row, Key extends keyof Row> = Omit<Row, Key> & {
 type JobRow = Tables<"jobs">;
 type CandidateRow = Tables<"candidates">;
 type ResumeRow = Tables<"resumes">;
+type InvitationRow = Tables<"invitations">;
 
 export type Job = StoredRow<JobRow, "top_talent_threshold" | "invite_threshold">;
 export type Candidate = StoredRow<CandidateRow, "match_score">;
@@ -29,10 +30,17 @@ export type NotAtsReadyResume = StoredRow<
 export type ResumeForFilter = NotAtsReadyResume &
   Pick<ResumeRow, "ats_status" | "ats_override">;
 
-/** A candidate as the job page uses it: radar parsed and resume file name attached. */
+/** What the job page shows of a candidate's invitation. */
+type InvitationSummary = Pick<InvitationRow, "sent_to" | "sent_at" | "approved_at">;
+
+/** A candidate row read with its invitation (null when it has none) in the same query. */
+export type CandidateWithInvitation = Candidate & { invitations: InvitationSummary | null };
+
+/** A candidate as the job page uses it: radar parsed, resume file name and invitation attached. */
 export type RankedCandidate = Omit<Candidate, "radar_results"> & {
   radar_results: RadarResults;
   resume_file_name: string;
+  invitation: InvitationSummary | null;
 };
 
 export type QueuedResume = Pick<NotAtsReadyResume, "id" | "file_name" | "created_at">;
@@ -82,6 +90,13 @@ export function asJobListItem(row: ListRow, resumeCount: number): JobListItem {
 /** A candidate row read on its own (the screening pipeline), with its score as stored tenths. */
 export function asCandidate(row: CandidateRow): Candidate {
   return row as Candidate;
+}
+
+/** A candidate row with its embedded invitation, with its score as stored tenths. */
+export function asCandidateWithInvitation(
+  row: CandidateRow & { invitations: InvitationSummary | null },
+): CandidateWithInvitation {
+  return row as CandidateWithInvitation;
 }
 
 export function asResumesForFilter(rows: ResumeFilterRow[]): ResumeForFilter[] {

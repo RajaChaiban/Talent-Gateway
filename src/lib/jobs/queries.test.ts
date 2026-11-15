@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { JOB_LIST_LIMIT, JobsDataError, listJobs } from "./queries";
+import { ok, queryBuilder, type QueryResult } from "../../../test/supabase-mock";
+import { getJobPage, JOB_LIST_LIMIT, JobsDataError, listJobs } from "./queries";
 
 type Result = { data: unknown; error: unknown };
 
@@ -62,5 +63,55 @@ describe("listJobs", () => {
     expect(error).toBeInstanceOf(JobsDataError);
     expect((error as JobsDataError).message).toBe("Jobs database call failed: list jobs");
     expect((error as JobsDataError).cause).toBe(cause);
+  });
+});
+
+describe("getJobPage", () => {
+  const JOB_ID = row.id;
+  const invitation = {
+    sent_to: "priya@example.com",
+    sent_at: "2026-11-15T10:00:05.000Z",
+    approved_at: "2026-11-15T10:00:00.000Z",
+  };
+  const candidateRow = (id: string, score: number, invitations: typeof invitation | null) => ({
+    id,
+    job_id: JOB_ID,
+    resume_id: `resume-${id}`,
+    full_name: id,
+    match_score: score,
+    match_summary: "",
+    strengths: [],
+    gaps: [],
+    radar_results: {},
+    email: `${id}@example.com`,
+    invite_status: invitations ? "SENT" : "NONE",
+    created_at: "2026-11-14T10:00:00Z",
+    invitations,
+  });
+
+  function client(results: Record<string, QueryResult>) {
+    const builders = Object.fromEntries(
+      Object.entries(results).map(([table, result]) => [table, queryBuilder(result)]),
+    );
+    return { client: { from: vi.fn((table: string) => builders[table]) } as never, builders };
+  }
+
+  it("reads each candidate's invitation in the same candidates query and attaches it", async () => {
+    const { client: supabase, builders } = client({
+      jobs: ok({ ...row, description: "d" }),
+      candidates: ok([candidateRow("a", 60, null), candidateRow("b", 90, invitation)]),
+      resumes: ok([]),
+    });
+
+    const page = await getJobPage(supabase, JOB_ID);
+
+    expect(builders.candidates.select).toHaveBeenCalledWith(
+      "*, invitations(sent_to, sent_at, approved_at)",
+    );
+    expect(page?.candidates.map((candidate) => [candidate.id, candidate.invitation])).toEqual([
+      ["b", invitation],
+      ["a", null],
+    ]);
+    expect(page?.candidates[0]).toMatchObject({ email: "b@example.com", invite_status: "SENT" });
   });
 });

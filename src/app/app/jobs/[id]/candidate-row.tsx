@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, MailCheck } from "lucide-react";
 import { RadarChips } from "@/components/candidates/radar-chips";
 import { ScoreBadge } from "@/components/candidates/score-badge";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +13,12 @@ import { CandidateDetail } from "./candidate-detail";
 type Props = {
   candidate: RankedCandidate;
   topTalent: StoredScore;
+  jobTitle: string;
   open: boolean;
   onToggle: () => void;
 };
 
-export function CandidateRow({ candidate, topTalent, open, onToggle }: Props) {
+export function CandidateRow({ candidate, topTalent, jobTitle, open, onToggle }: Props) {
   const detailId = `candidate-${candidate.id}-detail`;
   return (
     <li className="rounded-lg border border-border bg-card">
@@ -44,6 +45,12 @@ export function CandidateRow({ candidate, topTalent, open, onToggle }: Props) {
               Top talent
             </Badge>
           ) : null}
+          {candidate.invite_status === "SENT" ? (
+            <Badge variant="secondary">
+              <MailCheck data-icon="inline-start" aria-hidden />
+              Invited
+            </Badge>
+          ) : null}
         </span>
         <ScoreBadge score={candidate.match_score} />
       </button>
@@ -52,7 +59,7 @@ export function CandidateRow({ candidate, topTalent, open, onToggle }: Props) {
       </div>
       {open ? (
         <div id={detailId} role="region" aria-label={`${candidate.full_name} details`}>
-          <CandidateDetail candidate={candidate} />
+          <CandidateDetail candidate={candidate} jobTitle={jobTitle} />
         </div>
       ) : null}
     </li>
