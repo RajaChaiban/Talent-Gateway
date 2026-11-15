@@ -2,7 +2,7 @@
 
 The data model for talent-gateway on Supabase Postgres: four tables, one storage bucket, a single demo tenant. How the server uses these tables is in [BACKEND.md](BACKEND.md).
 
-**Status: target model, not built yet.** The app is a static landing page today, so there is no `supabase/` folder, no migration and no table. This file is the design the first migration is written against. The pull request that adds the migration updates this file.
+**Status: applied.** The hosted database matches this file. Two migrations in `supabase/migrations/` build it: `create_core_tables`, then `invite_flow`, which removed the automated interview tables and added `invitations`. No application code reads these tables yet; only sign-in uses the project so far.
 
 Supabase plays the customer's existing system here: the system of record that the Vercel pieces connect to rather than replace.
 
