@@ -56,7 +56,7 @@ One row per method and path.
 
 None yet. When the first model call is added, its slug goes in an `AI_MODELS` object in `src/lib/config.ts`, and each key (`AI_MODELS.<key>`) and its model string is named here.
 
-## 6. Speech-to-text
+## 6. Workflows
 
 None yet.
 

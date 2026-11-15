@@ -50,7 +50,7 @@ const PASSING: Tree = {
     "export const AI_MODELS = {",
     "  /** scoreResume */",
     '  scoring: "acme/small-1",',
-    '  grading: "acme/large-2",',
+    '  summary: "acme/large-2",',
     "} as const;",
   ].join("\n"),
   "src/lib/http.ts": 'export type ErrorCode =\n  | "unauthorized"\n  | "not_found";\n',
@@ -78,7 +78,7 @@ const PASSING: Tree = {
     "```",
     "",
     "<!-- planned:start -->",
-    "Planned, not merged: `src/lib/interview/` and `src/app/api/interview/`.",
+    "Planned, not merged: `src/lib/invitations/` and `src/app/api/invitations/`.",
     "<!-- planned:end -->",
     "",
     "## 3. Auth",
@@ -95,16 +95,16 @@ const PASSING: Tree = {
     "<!-- planned:start -->",
     "| Method | Path | Does |",
     "|---|---|---|",
-    "| POST | `/api/interview/[token]/answer` | Save an answer. `maxDuration` 60 |",
+    "| POST | `/api/invitations/[id]/send` | Send an invitation. `maxDuration` 60 |",
     "<!-- planned:end -->",
     "",
     "Server actions: `signIn`.",
     "",
     "## 5. Model calls",
     "",
-    "`AI_MODELS.scoring` is `acme/small-1`; `AI_MODELS.grading` is `acme/large-2`.",
+    "`AI_MODELS.scoring` is `acme/small-1`; `AI_MODELS.summary` is `acme/large-2`.",
     "",
-    "## 6. Speech",
+    "## 6. Workflows",
     "",
     "## 7. Pipeline",
     "",
@@ -120,7 +120,7 @@ const PASSING: Tree = {
     "<!-- planned:start -->",
     "| Name | Scope |",
     "|---|---|",
-    "| `SPEECH_KEY` | server |",
+    "| `MAIL_KEY` | server |",
     "<!-- planned:end -->",
     "",
     "## 9. Errors and limits",
@@ -209,10 +209,10 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
 
     it("fails when a route that now exists is still listed only as planned", () => {
       const result = check(
-        { "src/app/api/interview/[token]/answer/route.ts": "export async function POST() {}" },
-        (doc) => doc.replace("      jobs/ ", "      interview/           interview routes\n      jobs/ "),
+        { "src/app/api/invitations/[id]/send/route.ts": "export async function POST() {}" },
+        (doc) => doc.replace("      jobs/ ", "      invitations/         invitation routes\n      jobs/ "),
       );
-      expectOneProblem(result, "POST /api/interview/[token]/answer exists", "still lists it inside a planned block", "move its row");
+      expectOneProblem(result, "POST /api/invitations/[id]/send exists", "still lists it inside a planned block", "move its row");
     });
   });
 
@@ -242,9 +242,9 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
   describe("c. environment variables and section 8", () => {
     it("fails for a schema variable section 8 does not name", () => {
       const result = check({
-        "src/lib/env.ts": PASSING["src/lib/env.ts"].replace("  SERVICE_KEY:", "  SPEECH_KEY: z.string().optional(),\n  SERVICE_KEY:"),
+        "src/lib/env.ts": PASSING["src/lib/env.ts"].replace("  SERVICE_KEY:", "  MAIL_KEY: z.string().optional(),\n  SERVICE_KEY:"),
       });
-      expectOneProblem(result, "src/lib/env.ts: The environment variable SPEECH_KEY is in the env schema but not in docs/BACKEND.md section 8.");
+      expectOneProblem(result, "src/lib/env.ts: The environment variable MAIL_KEY is in the env schema but not in docs/BACKEND.md section 8.");
     });
 
     it("fails for a variable of the public schema that env.ts extends", () => {
@@ -258,15 +258,15 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
     });
 
     it("fails for a variable section 8 names that nothing defines or reads", () => {
-      const result = check({}, (doc) => doc.replace("| `FAKE_MODEL` | tests |", "| `FAKE_MODEL` | tests |\n| `OLD_SPEECH_KEY` | server |"));
-      expectOneProblem(result, "docs/BACKEND.md:", "Section 8 names the environment variable OLD_SPEECH_KEY", "planned block");
+      const result = check({}, (doc) => doc.replace("| `FAKE_MODEL` | tests |", "| `FAKE_MODEL` | tests |\n| `OLD_MAIL_KEY` | server |"));
+      expectOneProblem(result, "docs/BACKEND.md:", "Section 8 names the environment variable OLD_MAIL_KEY", "planned block");
     });
   });
 
   describe("d. folders and the project layout", () => {
     it("fails for a folder under src/lib the layout does not mention", () => {
-      const result = check({ "src/lib/verdict/grade.ts": "export const x = 1;" });
-      expectOneProblem(result, "src/lib/verdict: The folder src/lib/verdict/ is not in the project layout.", "section 2");
+      const result = check({ "src/lib/ranking/rank.ts": "export const x = 1;" });
+      expectOneProblem(result, "src/lib/ranking: The folder src/lib/ranking/ is not in the project layout.", "section 2");
     });
 
     it("fails for a folder under src/app/api the layout does not mention", () => {
@@ -300,7 +300,7 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
 
     it("fails when only the model string changed", () => {
       const result = check({ "src/lib/config.ts": PASSING["src/lib/config.ts"].replace("acme/large-2", "acme/large-3") });
-      expectOneProblem(result, 'The model "acme/large-3" (AI_MODELS.grading) is not in docs/BACKEND.md section 5.');
+      expectOneProblem(result, 'The model "acme/large-3" (AI_MODELS.summary) is not in docs/BACKEND.md section 5.');
     });
   });
 
@@ -312,13 +312,13 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
 
     it("fails for a code of a feature-local list", () => {
       const result = check(
-        { "src/lib/verdict/api.ts": 'export type GradeErrorCode = "not_ready";\nexport const GRADE_ERROR_CODES = ["not_ready", "upstream_error"] as const;' },
-        (doc) => doc.replace("    supabase/ ", "    verdict/               grading\n    supabase/ "),
+        { "src/lib/ranking/api.ts": 'export type RankErrorCode = "not_ready";\nexport const RANK_ERROR_CODES = ["not_ready", "upstream_error"] as const;' },
+        (doc) => doc.replace("    supabase/ ", "    ranking/               ranking\n    supabase/ "),
       );
       expect(result.status).toBe(1);
       expect(result.problems).toEqual([
-        expect.stringContaining('src/lib/verdict/api.ts: The error code "not_ready" is not in docs/BACKEND.md section 9.'),
-        expect.stringContaining('src/lib/verdict/api.ts: The error code "upstream_error" is not in docs/BACKEND.md section 9.'),
+        expect.stringContaining('src/lib/ranking/api.ts: The error code "not_ready" is not in docs/BACKEND.md section 9.'),
+        expect.stringContaining('src/lib/ranking/api.ts: The error code "upstream_error" is not in docs/BACKEND.md section 9.'),
       ]);
     });
   });
@@ -350,7 +350,7 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
 
     it("prints one line per problem, sorted by path, the same on every run", () => {
       const changes: Tree = {
-        "src/lib/verdict/grade.ts": "export const x = 1;",
+        "src/lib/ranking/rank.ts": "export const x = 1;",
         "src/app/api/demo/seed/route.ts": "export async function POST() {}",
         ".env.example": `${PASSING[".env.example"]}NEW_SECRET=\n`,
       };
@@ -361,7 +361,7 @@ describe("check-backend-doc", { timeout: 60_000 }, () => {
         ".env.example",
         "src/app/api/demo",
         "src/app/api/demo/seed/route.ts",
-        "src/lib/verdict",
+        "src/lib/ranking",
       ]);
       expect(first.lines.at(-1)).toContain("docs:check failed: 4 problems.");
     });

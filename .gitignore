@@ -45,3 +45,10 @@ next-env.d.ts
 
 # browser test screenshots
 .playwright-mcp/
+
+# the take-home brief: local reference only
+/ASSESSMENT.md
+
+# Supabase CLI local state
+/supabase/.temp/
+/supabase/.branches/
