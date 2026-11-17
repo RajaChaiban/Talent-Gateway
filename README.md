@@ -20,14 +20,14 @@ Talent Gateway removes the slow, repetitive part (checking files and a first rea
 3. **Pre-screen.** A rule-based check reads each file's text. A scanned image, a damaged file, a resume with no email address, no phone number or a picture in it, or one that falls below the pass score (for example with too few standard sections) is set aside on a "Not ATS-ready" tab with the reason. No model is called for it, so no money is spent on it.
 4. **Score.** For every readable resume the AI returns a match score from 0.0 to 10.0, a short summary, strengths and gaps.
 5. **Radar.** The AI also flags four risks: copied text, employment gaps, frequent job changes and AI-written padding. Each flag carries a one-line note.
-6. **Rank.** Candidates appear best first with a green, amber or red light. The recruiter can override the check with "Score anyway" for a file that was set aside.
+6. **Rank.** Candidates appear best first on three tabs: Ranked, Not ATS-ready and Queued. Each ranked candidate shows the score in green, amber or red with a word beside it (Strong, Possible or Weak match), and a search box filters the list by name. The recruiter can override the check with "Score anyway" for a file that was set aside.
 7. **Decide and invite.** Every ranked candidate has an **Invite to interview** button. It opens the candidate with the email address read from the resume, which the recruiter checks or corrects and then confirms. That confirmation is the approval. An email goes to the candidate, and the candidate's status changes to Invited.
 
 ### Human in the loop
 
 The AI recommends and a person approves. Nothing is sent to a candidate without a recruiter's click, and every invitation records who approved it and when.
 
-| Score | Light | Meaning |
+| Score | Colour | Meaning |
 |---|---|---|
 | 8.0 and above | Green | Top talent (default threshold, adjustable per job) |
 | 5.0 to 7.9 | Amber | Worth a look; invite bar defaults to 7.0 |
@@ -106,16 +106,17 @@ Status: draft.
 - **Docs as a verifier.** `docs/BACKEND.md` must name every route, environment variable, model and error code, and CI fails when it does not.
 - **Contrast check.** Every color pair in the design tokens must meet WCAG AA in both themes.
 - **Agent instructions.** `AGENTS.md` holds the working rules, review loops and delivery workflow used on this repository.
-- **Delivery.** One feature per branch and one pull request per feature, merged with a merge commit so the full history stays.
+- **Delivery.** One feature per branch and one pull request per feature.
 
 ### How AI behaviour was validated
 
-The full record, with every run's report, is in [docs/EVALUATION.md](docs/EVALUATION.md). In short, four layers:
+The full record, with every run's report, is in [docs/EVALUATION.md](docs/EVALUATION.md). In short, five layers:
 
 1. **Schema.** Model output must match a schema; output that does not parse is retried once and then fails the resume instead of being guessed.
 2. **Unit tests against a stand-in model.** The pipeline, the score arithmetic and the "no model call for a set-aside resume" rule are proven in CI without network access.
 3. **An evaluation set on the real model** (`npm run eval`). Eight tests state what should happen before the model runs: real files through extraction and the ATS check, role match, one factor changed at a time, stability over three runs, a resume that asks for a score of 100, a strict and a loose job description, the recruiter's score bars, and five job types with five resumes each. A run writes a dated report and fails when a pass mark is missed.
 4. **A larger model as a reference.** The same prompt and the same 25 cases were run on a much larger model and compared score by score: the same role match on every case both scored, an average difference of 0.24 on the 10 scale, at about 46 times the cost and twice the time. That is the evidence for using the small model.
+5. **A blind check on the live site.** Ten new resumes over two jobs were scored first by an independent reviewer model, then uploaded to the deployed site by a separate browser agent that recorded what the platform said, and the two were compared. The pre-screen agreed on 10 of 10, 7 of 9 scores were within 0.3, and an invitation sent from the site was delivered.
 
 What the tests changed: the model stopped doing arithmetic. It now judges each must-have of the job description, and the code adds up the score, because the evaluation showed the model did not follow scoring rules written in the prompt. Every attempt, including the ones that failed, is kept in `docs/evals/`.
 
