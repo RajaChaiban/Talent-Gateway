@@ -19,21 +19,24 @@ export default async function NewJobPage() {
   return (
     <section
       aria-labelledby="new-job-heading"
-      className="flex w-full flex-col gap-8"
+      className="flex w-full max-w-3xl flex-col"
     >
-      <div className="flex flex-col gap-2">
-        <Link
-          href="/app"
-          className="focus-ring inline-flex w-fit items-center gap-1.5 rounded-sm text-label-14 text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          Jobs
-        </Link>
-        <h1 id="new-job-heading" className="text-heading-24">
-          New job
-        </h1>
+      <Link
+        href="/app"
+        className="focus-ring inline-flex w-fit items-center gap-2 rounded-sm text-label-14 text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        Jobs
+      </Link>
+      <h1 id="new-job-heading" className="mt-6 text-3xl font-semibold tracking-[-0.04em]">
+        Create a new job
+      </h1>
+      <p className="mt-2 text-copy-14 text-muted-foreground">
+        Set the role details and screening thresholds.
+      </p>
+      <div className="mt-8">
+        <NewJobForm />
       </div>
-      <NewJobForm />
     </section>
   );
 }

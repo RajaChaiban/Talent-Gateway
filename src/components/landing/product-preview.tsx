@@ -1,58 +1,82 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { trafficLight } from "@/lib/config";
+import { FileText } from "lucide-react";
+import { trafficLight, type TrafficLight } from "@/lib/config";
 import { formatScore } from "@/lib/score";
-import { lightClass } from "@/lib/traffic-light";
 import { cn } from "@/lib/utils";
 import { sampleJobs, type SampleJob } from "./sample-jobs";
 
-const row = "flex items-center gap-3 px-4 py-2.5";
 const mono = "font-mono tabular-nums";
 const ROTATE_MS = 3000;
 const COUNT = sampleJobs.length;
+
+const scoreTone: Record<TrafficLight, string> = {
+  green: "bg-success-subtle text-success",
+  amber: "bg-warning-subtle text-warning",
+  red: "bg-error-subtle text-error",
+};
 
 function JobCard({ job }: { job: SampleJob }) {
   const topScore = job.candidates[0][1];
   return (
     <>
-      <p className={cn(row, "justify-between border-b border-border font-medium bg-secondary/30")}>
-        {job.title}
-        <span className={cn(mono, "text-label-12 font-normal text-muted-foreground")}>
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <p className="flex min-w-0 items-center gap-2 text-label-14 font-medium">
+          <span className="grid size-7 shrink-0 place-items-center rounded-md bg-muted">
+            <FileText className="size-4" aria-hidden />
+          </span>
+          <span className="truncate">{job.title}</span>
+        </p>
+        <span className="shrink-0 text-label-12 text-muted-foreground">
           {job.applicants} applicants
         </span>
-      </p>
-      <ol className="divide-y divide-border">
-        {job.candidates.map(([name, score], index) => (
-          <li key={name} className={row}>
-            <span className={cn(mono, "w-3 text-label-12 text-muted-foreground")}>{index + 1}</span>
-            <span className="flex-1 font-medium">{name}</span>
-            <span className={cn("size-2.5 rounded-full", lightClass[trafficLight(score)])} />
-            <span data-score className={cn(mono, "w-8 text-right font-medium")}>
-              {formatScore(score)}
-            </span>
-          </li>
-        ))}
-      </ol>
-      <p className="surface-subtle min-h-[4.25rem] border-y border-border px-4 py-2.5 text-copy-13 text-muted-foreground bg-amber-500/5">
-        <span className="font-medium text-amber-500">Unreadable file: </span>
-        {job.unreadable}
-      </p>
-      <div className="space-y-3 p-4 bg-secondary/20">
-        <p className="flex justify-between text-label-12 text-muted-foreground">
-          Top candidate match
-          <span className={cn(mono, "text-foreground font-medium")}>
-            Score: {formatScore(topScore)} / 10
-          </span>
+      </div>
+      <div className="p-4">
+        <p className="mb-3 text-label-12 font-medium text-muted-foreground">TOP MATCHES</p>
+        <ol className="flex flex-col gap-2">
+          {job.candidates.map(([name, score], index) => (
+            <li
+              key={name}
+              className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5"
+            >
+              <span className={cn(mono, "w-5 text-center text-label-12 text-muted-foreground")}>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-label-14 font-medium">{name}</span>
+              <span
+                data-score
+                className={cn(
+                  mono,
+                  "rounded-md px-2 py-1 text-label-12 font-medium",
+                  scoreTone[trafficLight(score)],
+                )}
+              >
+                {formatScore(score)}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 flex min-h-[4.25rem] items-start gap-2 rounded-lg bg-warning-subtle px-3 py-2.5 text-copy-13 text-muted-foreground">
+          <span className="shrink-0 font-medium text-warning">Unreadable file:</span>
+          {job.unreadable}
         </p>
-        <p className="min-h-[4.5rem] font-medium text-copy-14">{job.summary}</p>
-        <div className="flex flex-wrap gap-2 text-label-12 text-muted-foreground">
-          <span className="rounded border border-border px-2 py-0.5 bg-background">
-            Strengths: {job.strengths}
-          </span>
-          <span className="rounded border border-border px-2 py-0.5 bg-background">
-            Radar: {job.radar}
-          </span>
+        <div className="mt-3 space-y-2">
+          <p className="flex justify-between text-label-12 text-muted-foreground">
+            Top candidate match
+            <span className={cn(mono, "font-medium text-foreground")}>
+              Score: {formatScore(topScore)} / 10
+            </span>
+          </p>
+          <p className="min-h-[4.5rem] text-copy-14 font-medium">{job.summary}</p>
+          <div className="flex flex-wrap gap-2 text-label-12 text-muted-foreground">
+            <span className="rounded-md border border-border px-2 py-0.5">
+              Strengths: {job.strengths}
+            </span>
+            <span className="rounded-md border border-border px-2 py-0.5">
+              Radar: {job.radar}
+            </span>
+          </div>
         </div>
       </div>
     </>
@@ -138,7 +162,7 @@ export function ProductPreview() {
           </button>
         ))}
       </div>
-      <div className="surface-card overflow-hidden rounded-lg border border-border text-copy-14 shadow-sm">
+      <div className="surface-card overflow-hidden rounded-xl border border-border text-copy-14">
         <div
           className={cn(
             "flex ease-out motion-reduce:transition-none",

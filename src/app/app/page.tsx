@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, Plus } from "lucide-react";
+import { BriefcaseBusiness, ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { LocalDate } from "@/components/jobs/local-date";
 import { JobStatusBadge } from "@/components/jobs/status-badge";
@@ -19,11 +19,14 @@ export default async function JobsPage() {
   const jobs = await listJobs(supabase);
 
   return (
-    <section aria-labelledby="jobs-heading" className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 id="jobs-heading" className="text-heading-24">
-          Jobs
-        </h1>
+    <section aria-labelledby="jobs-heading" className="flex flex-1 flex-col">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="text-copy-14 text-muted-foreground">Your workspace</p>
+          <h1 id="jobs-heading" className="mt-1 text-3xl font-semibold tracking-[-0.04em]">
+            Jobs
+          </h1>
+        </div>
         <Link href="/app/jobs/new" className={buttonVariants({ size: "lg" })}>
           <Plus data-icon="inline-start" aria-hidden />
           New job
@@ -31,37 +34,52 @@ export default async function JobsPage() {
       </div>
 
       {jobs.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-lg border border-border surface-subtle px-6 py-16 text-center">
-          <BriefcaseBusiness className="mb-2 size-6 text-muted-foreground" aria-hidden />
-          <h2 className="text-heading-20">No jobs yet</h2>
-          <p className="max-w-sm text-copy-14 text-muted-foreground">
+        <div className="surface-card mt-8 flex flex-col items-center rounded-lg border border-border px-5 py-16 text-center">
+          <span className="grid size-12 place-items-center rounded-xl bg-muted text-muted-foreground">
+            <BriefcaseBusiness className="size-5" aria-hidden />
+          </span>
+          <h2 className="mt-4 text-heading-16">No jobs yet</h2>
+          <p className="mt-2 max-w-sm text-copy-14 text-muted-foreground">
             Jobs you create will appear here, each with its ranked candidates.
           </p>
           <Link
             href="/app/jobs/new"
-            className={buttonVariants({ variant: "outline", size: "lg", className: "mt-4" })}
+            className={buttonVariants({ size: "lg", className: "mt-5" })}
           >
             Create your first job
           </Link>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {jobs.map((job) => (
-            <li key={job.id}>
-              <Link
-                href={`/app/jobs/${job.id}`}
-                className="focus-ring flex flex-col gap-2 rounded-lg border border-border bg-card px-4 py-3.5 transition-colors outline-none hover:border-border-strong hover:bg-background-subtle sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-5"
-              >
-                <span className="min-w-0 truncate text-label-16 font-medium">{job.title}</span>
-                <span className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-label-14 text-muted-foreground">
+        <>
+          <ul className="surface-card mt-8 overflow-hidden rounded-lg border border-border">
+            {jobs.map((job) => (
+              <li key={job.id} className="border-b border-border last:border-b-0">
+                <Link
+                  href={`/app/jobs/${job.id}`}
+                  className="focus-ring flex flex-col gap-3 p-4 transition-colors outline-none hover:bg-background-subtle sm:flex-row sm:items-center"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-label-16 font-medium">{job.title}</span>
+                    <span className="mt-1 block text-label-12 text-muted-foreground">
+                      Created <LocalDate iso={job.created_at} />
+                    </span>
+                  </span>
                   <JobStatusBadge status={job.status} />
-                  <LocalDate iso={job.created_at} />
-                  <span className="tabular-nums">{resumeCountLabel(job.resume_count)}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  <span className="text-label-14 text-muted-foreground tabular-nums">
+                    {resumeCountLabel(job.resume_count)}
+                  </span>
+                  <ChevronRight
+                    className="hidden size-4 text-muted-foreground sm:block"
+                    aria-hidden
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-label-12 text-muted-foreground">
+            Showing {jobs.length} {jobs.length === 1 ? "job" : "jobs"}
+          </p>
+        </>
       )}
     </section>
   );

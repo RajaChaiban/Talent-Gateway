@@ -134,11 +134,13 @@ export function InvitePanelView({
             ) : null}
             .
           </p>
-          <div className="flex flex-col gap-2 rounded-md border border-border bg-background-subtle px-3 py-2">
-            <p className="text-copy-14">
-              <span className="text-muted-foreground">Subject:</span> {message.subject}
+          <div className="flex flex-col gap-2 rounded-md bg-background-subtle p-3">
+            <p className="text-copy-13 font-medium">
+              <span className="font-normal text-muted-foreground">Subject:</span> {message.subject}
             </p>
-            <p className="text-copy-14 whitespace-pre-line">{message.text}</p>
+            <p className="text-copy-13 leading-5 whitespace-pre-line text-muted-foreground">
+              {message.text}
+            </p>
           </div>
         </>
       ) : (
@@ -157,14 +159,14 @@ export function InvitePanelView({
               aria-describedby={hintId}
               aria-invalid={email.trim() !== "" && !valid ? true : undefined}
               onChange={(event) => onEmailChange(event.target.value)}
-              className="sm:max-w-sm"
+              size="lg"
             />
             <p id={hintId} className="text-copy-13 text-muted-foreground">
               The first address found in the resume. Check it before sending.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="sm" disabled={sending || !valid}>
+          <div className="flex flex-wrap-reverse items-center justify-end gap-3">
+            <Button type="submit" disabled={sending || !valid}>
               {sending ? <LoaderCircle className="animate-spin" data-icon="inline-start" aria-hidden /> : null}
               {sending ? "Sending…" : phase === "failed" ? "Try again" : "Invite to interview"}
             </Button>

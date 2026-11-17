@@ -10,11 +10,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowDownToLine,
   Check,
   CircleAlert,
   Clock,
-  Download,
-  FileText,
+  FilePlus2,
   LoaderCircle,
   RotateCw,
   Trash2,
@@ -25,6 +25,7 @@ import { LocalDate } from "@/components/jobs/local-date";
 import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { RESUME_LIMITS } from "@/lib/config";
+import { resumeCountLabel } from "@/lib/jobs/helpers";
 import { deleteResume } from "@/lib/resumes/client-api";
 import { validateDrop, type RejectedFile } from "@/lib/resumes/drop";
 import { removalVerdict } from "@/lib/resumes/removal";
@@ -35,8 +36,14 @@ import type { ResumeListItem } from "@/lib/resumes/types";
 import { createUploadQueue, type QueueItem } from "@/lib/resumes/upload-queue";
 import { createUploadWorker, newUploadProgress, type UploadJob } from "@/lib/resumes/upload-pipeline";
 import { cn } from "@/lib/utils";
+import { FileGlyph } from "./file-glyph";
 
 type Item = QueueItem<UploadJob>;
+
+/** A quiet icon button on a resume row. */
+const ICON_ACTION = "text-muted-foreground hover:text-foreground";
+/** The row's remove button, which turns to the error colours on hover. */
+const REMOVE_ACTION = "text-muted-foreground hover:bg-error-subtle hover:text-error";
 
 const REFRESH_DELAY_MS = 400;
 
@@ -51,7 +58,7 @@ const TONE_CLASS: Record<Tone, string> = {
 
 function Status({ children, tone = "muted" }: { children: React.ReactNode; tone?: Tone }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-copy-13", TONE_CLASS[tone])}>
+    <span className={cn("inline-flex min-w-0 items-center gap-1.5 text-copy-13", TONE_CLASS[tone])}>
       {children}
     </span>
   );
@@ -118,18 +125,23 @@ function Row({
   actions: React.ReactNode;
 }) {
   return (
-    <li className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border surface-card px-4 py-3 sm:px-5">
-      <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      <span className="min-w-0 flex-1 basis-40 truncate text-label-14 font-medium" title={name}>
-        {name}
-      </span>
-      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">{status}</span>
-      {date ? (
-        <span className="text-copy-13 text-muted-foreground tabular-nums">
-          <LocalDate iso={date} />
-        </span>
-      ) : null}
-      <span className="flex items-center gap-1">{actions}</span>
+    <li className="flex items-center gap-3 border-b border-border p-3 last:border-b-0">
+      <FileGlyph />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-label-14 font-medium" title={name}>
+          {name}
+        </p>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {status}
+          {date ? (
+            <span className="text-copy-13 text-muted-foreground tabular-nums">
+              <span aria-hidden>· </span>
+              <LocalDate iso={date} />
+            </span>
+          ) : null}
+        </p>
+      </div>
+      <span className="flex shrink-0 items-center gap-0.5">{actions}</span>
     </li>
   );
 }
@@ -286,8 +298,25 @@ export function ResumesSection({
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
   }
 
+  const pickFiles = () => inputRef.current?.click();
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id="resumes-heading" className="text-heading-20">
+            Resumes
+          </h2>
+          <p className="mt-1 text-copy-14 text-muted-foreground tabular-nums">
+            PDF and DOCX files · {resumeCountLabel(resumes.length)} uploaded
+          </p>
+        </div>
+        <Button type="button" variant="outline" onClick={pickFiles}>
+          <FilePlus2 data-icon="inline-start" aria-hidden />
+          Add files
+        </Button>
+      </div>
+
       <div
         role="group"
         aria-labelledby="resume-dropzone-title"
@@ -299,26 +328,25 @@ export function ResumesSection({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center transition-colors",
-          dragging ? "border-ring surface-card" : "border-input surface-subtle",
+          "flex flex-col items-center rounded-lg border border-dashed px-5 py-8 text-center transition-colors",
+          dragging ? "border-ring surface-card" : "border-border-strong surface-subtle",
         )}
       >
-        <Upload className="mb-2 size-6 text-muted-foreground" aria-hidden />
-        <p id="resume-dropzone-title" className="text-heading-16">
-          Drag resumes here
+        <span
+          className="grid size-10 place-items-center rounded-lg border border-border bg-card"
+          aria-hidden
+        >
+          <Upload className="size-4 text-muted-foreground" />
+        </span>
+        <p id="resume-dropzone-title" className="mt-3 text-label-14 font-medium">
+          Drop resumes here, or{" "}
+          <Button type="button" variant="link" className="text-label-14 underline" onClick={pickFiles}>
+            browse files
+          </Button>
         </p>
-        <p className="max-w-sm text-copy-14 text-muted-foreground">
+        <p className="mt-1 max-w-sm text-copy-13 text-muted-foreground">
           {FILE_RULE_MESSAGE} each, up to {RESUME_LIMITS.maxFilesPerDrop} files at a time.
         </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="mt-2"
-          onClick={() => inputRef.current?.click()}
-        >
-          Choose files
-        </Button>
         <input
           ref={inputRef}
           type="file"
@@ -388,7 +416,7 @@ export function ResumesSection({
       ) : null}
 
       {savedRows.length + localRows.length > 0 ? (
-        <ul aria-label="Resumes" className="flex flex-col gap-2">
+        <ul aria-label="Resumes" className="flex flex-col rounded-lg border border-border surface-card">
           {savedRows.map((resume) => (
             <Row
               key={resume.id}
@@ -408,22 +436,31 @@ export function ResumesSection({
                     <a
                       href={resumeFileHref(resume.id)}
                       aria-label={`Download ${resume.file_name}`}
-                      className={buttonVariants({ variant: "outline", size: "sm" })}
+                      title="Download"
+                      className={buttonVariants({
+                        variant: "ghost",
+                        size: "icon-sm",
+                        className: ICON_ACTION,
+                      })}
                     >
-                      <Download data-icon="inline-start" aria-hidden />
-                      Download
+                      <ArrowDownToLine aria-hidden />
                     </a>
                   ) : null}
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon-sm"
+                    className={REMOVE_ACTION}
                     disabled={removing.has(resume.id)}
                     aria-label={`Remove ${resume.file_name}`}
+                    title="Remove"
                     onClick={() => void removeSaved(resume)}
                   >
-                    <Trash2 data-icon="inline-start" aria-hidden />
-                    Remove
+                    {removing.has(resume.id) ? (
+                      <LoaderCircle className="animate-spin" aria-hidden />
+                    ) : (
+                      <Trash2 aria-hidden />
+                    )}
                   </Button>
                 </>
               }
@@ -445,24 +482,26 @@ export function ResumesSection({
                     {item.final ? null : (
                       <Button
                         type="button"
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon-sm"
+                        className={ICON_ACTION}
                         aria-label={`Retry ${item.payload.file.name}`}
+                        title="Retry"
                         onClick={() => queue.retry(item.id)}
                       >
-                        <RotateCw data-icon="inline-start" aria-hidden />
-                        Retry
+                        <RotateCw aria-hidden />
                       </Button>
                     )}
                     <Button
                       type="button"
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon-sm"
+                      className={REMOVE_ACTION}
                       aria-label={`Remove ${item.payload.file.name}`}
+                      title="Remove"
                       onClick={() => void removeItem(item)}
                     >
-                      <Trash2 data-icon="inline-start" aria-hidden />
-                      Remove
+                      <Trash2 aria-hidden />
                     </Button>
                   </>
                 ) : null

@@ -6,7 +6,6 @@ import { LocalDate } from "@/components/jobs/local-date";
 import { JobStatusBadge } from "@/components/jobs/status-badge";
 import { requireSignedInUser } from "@/lib/auth/require-signed-in-user";
 import { APP_NAME } from "@/lib/config";
-import { resumeCountLabel } from "@/lib/jobs/helpers";
 import { getJobPage } from "@/lib/jobs/queries";
 import { jobIdSchema } from "@/lib/jobs/schemas";
 import { listResumes } from "@/lib/resumes/queries";
@@ -47,33 +46,38 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
   const { job, candidates, notAtsReady, queued, counts } = page;
 
   return (
-    <div className="flex w-full flex-col gap-10">
-      <header className="flex flex-col gap-2">
+    <div className="flex w-full min-w-0 flex-col">
+      <header className="flex flex-col gap-6">
         <Link
           href="/app"
-          className="focus-ring inline-flex w-fit items-center gap-1.5 rounded-sm text-label-14 text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          className="focus-ring inline-flex w-fit items-center gap-2 rounded-sm text-copy-14 text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="size-4" aria-hidden />
           Jobs
         </Link>
-        <h1 className="text-heading-24 break-words">{job.title}</h1>
-        <div className="flex flex-wrap items-center gap-3 text-label-14 text-muted-foreground">
-          <JobStatusBadge status={job.status} />
-          <span>
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="min-w-0 text-heading-32 break-words">{job.title}</h1>
+            <JobStatusBadge status={job.status} />
+          </div>
+          <p className="text-copy-14 text-muted-foreground">
             Created <LocalDate iso={job.created_at} />
-          </span>
+          </p>
         </div>
       </header>
 
-      <section aria-labelledby="description-heading" className="flex flex-col gap-3">
-        <h2 id="description-heading" className="text-heading-20">
+      <section
+        aria-labelledby="description-heading"
+        className="mt-7 flex flex-col gap-3 rounded-lg border border-border surface-card p-5"
+      >
+        <h2 id="description-heading" className="text-heading-14">
           Job description
         </h2>
         <ExpandableText text={job.description} />
       </section>
 
-      <section aria-labelledby="thresholds-heading" className="flex flex-col gap-3">
-        <h2 id="thresholds-heading" className="text-heading-20">
+      <section aria-labelledby="thresholds-heading" className="mt-5 flex flex-col gap-3">
+        <h2 id="thresholds-heading" className="text-heading-14">
           Thresholds
         </h2>
         <JobThresholds
@@ -86,22 +90,11 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
         />
       </section>
 
-      <section aria-labelledby="resumes-heading" className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 id="resumes-heading" className="text-heading-20">
-            Resumes
-          </h2>
-          <span className="text-label-14 tabular-nums text-muted-foreground">
-            {resumeCountLabel(resumes.length)}
-          </span>
-        </div>
+      <section id="resumes" aria-labelledby="resumes-heading" className="mt-8 scroll-mt-6">
         <ResumesSection key={job.id} jobId={job.id} resumes={resumes} />
       </section>
 
-      <section aria-labelledby="analyze-heading" className="flex flex-col gap-3">
-        <h2 id="analyze-heading" className="text-heading-20">
-          Analyze
-        </h2>
+      <section aria-labelledby="analyze-heading" className="mt-8">
         <AnalyzePanel
           jobId={job.id}
           jobStatus={job.status}
@@ -109,10 +102,7 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
         />
       </section>
 
-      <section aria-labelledby="candidates-heading" className="flex flex-col gap-3">
-        <h2 id="candidates-heading" className="text-heading-20">
-          Candidates
-        </h2>
+      <section aria-labelledby="candidates-heading" className="mt-9">
         <CandidatesSection
           candidates={candidates}
           notAtsReady={notAtsReady}
@@ -122,6 +112,10 @@ export default async function JobPage({ params }: PageProps<"/app/jobs/[id]">) {
           jobTitle={job.title}
         />
       </section>
+
+      <p className="pt-6 text-copy-13 text-muted-foreground">
+        Scores are guidance, not a hiring decision. Review each candidate with your team.
+      </p>
     </div>
   );
 }

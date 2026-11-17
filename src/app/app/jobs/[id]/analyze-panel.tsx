@@ -35,6 +35,14 @@ function ProgressBar({ progress }: { progress: JobProgress }) {
   const fraction = total === 0 ? 1 : analyzed / total;
   return (
     <div className="flex flex-col gap-2">
+      <p className="flex justify-between gap-3 text-label-12 text-muted-foreground tabular-nums">
+        <span>
+          {analyzed} of {total} analyzed
+        </span>
+        <span className="font-mono" aria-hidden>
+          {Math.round(fraction * 100)}%
+        </span>
+      </p>
       <div
         role="progressbar"
         aria-label="Analysis progress"
@@ -42,16 +50,13 @@ function ProgressBar({ progress }: { progress: JobProgress }) {
         aria-valuemax={total}
         aria-valuenow={analyzed}
         aria-valuetext={`${analyzed} of ${total} analyzed`}
-        className="h-2 w-full overflow-hidden rounded-full border border-border bg-muted"
+        className="h-2 w-full overflow-hidden rounded-full bg-muted"
       >
         <div
-          className="h-full w-full origin-left bg-primary transition-transform"
+          className="h-full w-full origin-left rounded-full bg-primary transition-transform"
           style={{ transform: `scaleX(${fraction})` }}
         />
       </div>
-      <p className="font-mono text-label-14 tabular-nums text-muted-foreground">
-        {analyzed} of {total} analyzed
-      </p>
     </div>
   );
 }
@@ -105,14 +110,19 @@ export function AnalyzePanelView({
 }: AnalyzePanelViewProps) {
   const running = phase === "running";
   return (
-    <div className="surface-card flex flex-col gap-4 rounded-lg border border-border p-4 sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-copy-14 text-muted-foreground">
-          {pending > 0
-            ? `${resumes(pending)} to analyze. Each gets the ATS check; only ATS-ready resumes are scored by AI.`
-            : "Every resume with text has been analyzed."}
-        </p>
-        <div className="flex flex-col gap-2 sm:flex-row">
+    <div className="surface-card flex flex-col gap-5 rounded-lg border border-border p-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 id="analyze-heading" className="text-heading-16">
+            Analyze resumes
+          </h2>
+          <p className="mt-1 text-copy-14 text-muted-foreground">
+            {pending > 0
+              ? `${resumes(pending)} to analyze. Each gets the ATS check; only ATS-ready resumes are scored by AI.`
+              : "Every resume with text has been analyzed."}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
           {phase === "finished" && failed > 0 ? (
             <Button variant="outline" size="lg" onClick={onAnalyze}>
               <RotateCcw aria-hidden />

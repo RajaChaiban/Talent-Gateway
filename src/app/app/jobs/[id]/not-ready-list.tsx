@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Download, LoaderCircle } from "lucide-react";
+import { ArrowDownToLine, CircleAlert, CircleCheck, LoaderCircle, Search } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { NotAtsReadyResume } from "@/lib/jobs/types";
 import { resumeFileHref } from "@/lib/resumes/saved-status";
 import { formatScore } from "@/lib/score";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "./empty-state";
+import { FileGlyph } from "./file-glyph";
 import { requestScoreAnyway, type ScoreAnywayOutcome } from "./score-anyway-client";
 
 /**
@@ -20,7 +22,15 @@ import { requestScoreAnyway, type ScoreAnywayOutcome } from "./score-anyway-clie
  * reasons are shown so the recruiter can judge the check, and only an explicit
  * click sends it to the model, so a bad file costs nothing unless asked.
  */
-export function NotReadyList({ resumes }: { resumes: NotAtsReadyResume[] }) {
+export function NotReadyList({
+  resumes,
+  totalCount,
+}: {
+  /** The set-aside resumes to show: all of them, or those matching the search. */
+  resumes: NotAtsReadyResume[];
+  /** How many are set aside before the search, to tell "none set aside" from "none match". */
+  totalCount: number;
+}) {
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -50,11 +60,24 @@ export function NotReadyList({ resumes }: { resumes: NotAtsReadyResume[] }) {
     </p>
   ) : null;
 
+  if (totalCount === 0) {
+    return (
+      <>
+        {notice}
+        <EmptyState
+          icon={CircleCheck}
+          title="No resumes set aside"
+          body="Resumes the ATS check sets aside are listed here, so you can still score them."
+        />
+      </>
+    );
+  }
+
   if (resumes.length === 0) {
     return (
       <>
         {notice}
-        <p className="text-copy-14 text-muted-foreground">No resumes have been set aside.</p>
+        <EmptyState icon={Search} title="No matching resumes" body="Try a different search." />
       </>
     );
   }
@@ -62,37 +85,48 @@ export function NotReadyList({ resumes }: { resumes: NotAtsReadyResume[] }) {
   return (
     <>
       {notice}
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-3">
         {resumes.map((resume) => {
           const scoring = activeId === resume.id;
           return (
             <li
               key={resume.id}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-card px-4 py-3 sm:px-5"
+              className="flex flex-col gap-3 rounded-lg border border-border surface-card p-4 sm:flex-row sm:items-start"
             >
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <span className="min-w-0 font-mono text-label-14 font-medium break-all">
-                  {resume.file_name}
-                </span>
-                <span className="text-label-14 text-muted-foreground">
-                  ATS score{" "}
-                  <span className="font-mono font-semibold text-foreground tabular-nums">
-                    {resume.ats_score === null ? "not recorded" : formatScore(resume.ats_score)}
-                  </span>
-                </span>
+              <FileGlyph />
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="truncate text-label-14 font-medium" title={resume.file_name}>
+                    {resume.file_name}
+                  </p>
+                  <p className="text-copy-13 text-muted-foreground">
+                    ATS score{" "}
+                    <span className="font-mono font-medium text-foreground tabular-nums">
+                      {resume.ats_score === null ? "not recorded" : formatScore(resume.ats_score)}
+                    </span>
+                    <span role="status" className="block">
+                      {scoring ? "Scoring this resume. This can take a few seconds." : ""}
+                    </span>
+                  </p>
+                </div>
+                {resume.ats_reasons.length > 0 ? (
+                  <ul aria-label="Reasons" className="flex flex-wrap gap-2">
+                    {resume.ats_reasons.map((reason, index) => (
+                      <li
+                        key={`${index}:${reason}`}
+                        className="inline-flex max-w-full items-start gap-1 rounded-md bg-warning-subtle px-2 py-1 text-label-12 text-warning"
+                      >
+                        <CircleAlert className="mt-px size-3 shrink-0" aria-hidden />
+                        <span className="min-w-0 break-words">{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
-              {resume.ats_reasons.length > 0 ? (
-                <ul aria-label="Reasons" className="flex list-disc flex-col gap-1 pl-5 text-copy-14">
-                  {resume.ats_reasons.map((reason, index) => (
-                    <li key={`${index}:${reason}`}>{reason}</li>
-                  ))}
-                </ul>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   disabled={busy}
                   onClick={() => scoreAnyway(resume)}
                   aria-label={`Score anyway: ${resume.file_name}`}
@@ -103,14 +137,11 @@ export function NotReadyList({ resumes }: { resumes: NotAtsReadyResume[] }) {
                 <a
                   href={resumeFileHref(resume.id)}
                   aria-label={`Download ${resume.file_name}`}
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
+                  className={buttonVariants({ variant: "outline" })}
                 >
-                  <Download data-icon="inline-start" aria-hidden />
+                  <ArrowDownToLine data-icon="inline-start" aria-hidden />
                   Download
                 </a>
-                <span role="status" className="text-copy-13 text-muted-foreground">
-                  {scoring ? "Scoring this resume. This can take a few seconds." : ""}
-                </span>
               </div>
             </li>
           );
