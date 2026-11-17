@@ -11,7 +11,7 @@ One model call scores one resume against one job description. It runs only for a
 
 So two things need checking: that the filter sets aside the right files, and that the model's judgements produce sensible, stable scores.
 
-## The method, in four layers
+## The method, in five layers
 
 | Layer | What it checks | Calls a model | Runs |
 |---|---|---|---|
@@ -19,8 +19,9 @@ So two things need checking: that the filter sets aside the right files, and tha
 | 2. Unit tests | The pipeline, the ATS check, the score arithmetic and the rule that a set-aside resume makes no model call, against a stand-in model | no | in CI, on every pull request |
 | 3. Evaluation set | A fixed set of resumes and jobs with stated expectations, scored by the real model | yes | by hand, before a change to the prompt, the weights or the model (`npm run eval`) |
 | 4. Reference model | The same prompt and the same cases on a much larger model, compared score by score | yes | by hand, when choosing or changing the model (`npm run eval -- --model <slug>`, then `npm run eval:compare`) |
+| 5. Blind check on the deployed site | New resumes scored first by an independent reviewer, then run through the live site by a separate browser agent, and the two sets of answers compared | yes | by hand, after a release that touches the upload, screening or candidate pages |
 
-Layers 3 and 4 are not in CI: they need the gateway, cost money and are not perfectly repeatable.
+Layers 3, 4 and 5 are not in CI: they need the gateway, cost money and are not perfectly repeatable.
 
 ## Layer 3: the evaluation set
 
@@ -106,6 +107,33 @@ What this shows:
 - **The small model is enough for this task.** Because the code does the arithmetic, the model only has to classify, and the two models classify the same way.
 - **The larger model does not fit the app's limits as they are.** Three of its calls ran past the 25-second budget for one resume, and fourteen were refused by the gateway's rate limit for that model. Two cases were never scored by it. Switching to it would need a longer time budget as well as about 46 times the spend.
 - **Swapping the model is one line of config.** Every call goes through AI Gateway with a plain `provider/model` slug, so the same evaluation can be run on any model before a switch.
+
+## Layer 5: a blind check on the deployed site
+
+Layers 3 and 4 call the scoring function from a script. They do not sign in, upload a file or read the result off the page, and they reuse a set of resumes the prompt was tuned against. This layer closes both gaps with two agents that do not see each other's work.
+
+- **The reviewer** is a larger model, `anthropic/claude-fable-5.2`. It is given the scoring instructions and the weights, reads each resume against its job description, and writes down a score and the expected risk flags. Its answers are saved before the site is used.
+- **The driver** is a browser agent. It is given the files and the job descriptions but not what each file is meant to show. It signs in to the deployed site, creates a job, uploads the resumes, clicks Analyze, and copies every score, summary, strength, gap and flag word for word.
+
+The two records are then compared by a person. Where they differ, the resume is read again and the difference is explained; neither side is taken as the answer key.
+
+The first run, on 2026-11-16 against production, used ten resumes written for it (five for a software engineer job, five for a senior financial analyst job). The full record is in [`docs/evals/2026-11-16-deployed-agent-check.md`](evals/2026-11-16-deployed-agent-check.md).
+
+| | Result |
+|---|---|
+| Pre-screen (ready or set aside, with the reason) | the same on 10 of 10 |
+| Scores identical to the decimal | 3 of 9 |
+| Scores within 0.3 | 7 of 9 |
+| Average difference | 0.37 on the 10 scale |
+| Risk flags | the same on 39 of 40 |
+| Invitation sent from the deployed site | delivered, `invite_status` `SENT` |
+
+What it found:
+
+- **A resume that pastes the job description scored 7.3, above the default invite bar of 7.0.** The reviewer expected about 6.0, counting a pasted requirement as listed, not shown. The platform counted it as shown. The AI-written flag fired on the same resume, so the warning is on the page, but the score alone would invite the candidate. This is the same weakness test 4 measures with vague claims, seen here with copied ones.
+- **The copycat flag fired on one similar sentence**, where the rule asks for large passages.
+- **An accountant scored 3.4 where the reviewer expected about 4.6.** The platform gave no credit for adjacent accounting work. This is the stricter reading and is consistent with the rubric.
+- **The whole path works on production**: upload, text extraction, the pre-screen reasons, scoring, Score anyway, and the invitation email.
 
 ## What this does not prove
 

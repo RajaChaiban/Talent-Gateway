@@ -136,3 +136,9 @@ npm run eval:compare -- docs/evals/<date>-sonnet-job-types.json docs/evals/<date
 - [2026-11-15-compare-jobtypes-haiku-vs-jobtypes-fable](2026-11-15-compare-jobtypes-haiku-vs-jobtypes-fable.md)
 - [2026-11-15-compare-jobtypes-haiku-vs-jobtypes-fable-2](2026-11-15-compare-jobtypes-haiku-vs-jobtypes-fable-2.md)
 <!-- comparisons:end -->
+
+## Deployed checks
+
+A blind check of the deployed site: an independent reviewer scores new resumes first, a separate browser agent runs them through the live site, and the two are compared. The method is in [EVALUATION.md](../EVALUATION.md#layer-5-a-blind-check-on-the-deployed-site).
+
+- [2026-11-16-deployed-agent-check](2026-11-16-deployed-agent-check.md)
