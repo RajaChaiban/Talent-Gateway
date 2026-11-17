@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export function SignOutButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="outline" size="sm" disabled={pending}>
+    <Button type="submit" variant="ghost" size="sm" disabled={pending}>
       {pending ? (
         <LoaderCircle className="animate-spin" data-icon="inline-start" aria-hidden />
       ) : (

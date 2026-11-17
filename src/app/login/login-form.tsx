@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn, type SignInState } from "./actions";
 
+const labelStyle = "text-label-14 text-foreground";
 const initialState: SignInState = { email: "", fieldErrors: {}, formError: null };
 
 /** `next` is the page to open after sign-in; it is sent as a hidden field and checked again on the server. */
@@ -29,13 +30,14 @@ export function LoginForm({ next }: { next: string }) {
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className={labelStyle}>Email</Label>
         <Input
           id="email"
           name="email"
           type="email"
           autoComplete="username"
           inputMode="email"
+          placeholder="you@company.com"
           required
           defaultValue={state.email}
           aria-invalid={emailError ? true : undefined}
@@ -50,12 +52,13 @@ export function LoginForm({ next }: { next: string }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password" className={labelStyle}>Password</Label>
         <Input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
+          placeholder="Enter your password"
           required
           aria-invalid={passwordError ? true : undefined}
           aria-describedby={passwordError ? "password-error" : undefined}

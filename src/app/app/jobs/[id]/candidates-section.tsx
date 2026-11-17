@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { z } from "zod";
+import { buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type {
   NotAtsReadyResume,
   QueuedResume,
@@ -12,11 +14,12 @@ import type {
 } from "@/lib/jobs/types";
 import type { StoredScore } from "@/lib/score";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "./empty-state";
 import { NotReadyList } from "./not-ready-list";
 import { QueuedList } from "./queued-list";
 import { RankedList } from "./ranked-list";
 
-const TAB_IDS = ["ranked", "not-ready"] as const;
+const TAB_IDS = ["ranked", "not-ready", "queued"] as const;
 type TabId = (typeof TAB_IDS)[number];
 
 // An unknown or missing `?tab=` value falls back to the ranked tab instead of failing.
@@ -43,7 +46,12 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`;
 }
 
-/** The job page's candidate tabs: Ranked and Not ATS-ready, plus the queued resumes. The open tab and the open candidate are kept in the URL (`tab`, `candidate`) so a link or reload returns to the same view. */
+/**
+ * The job page's candidate tabs: Ranked, Not ATS-ready and Queued. The open tab
+ * and the open candidate are kept in the URL (`tab`, `candidate`) so a link or
+ * reload returns to the same view. The search filters the loaded lists in the
+ * browser: ranked candidates by name, set-aside and queued resumes by file name.
+ */
 export function CandidatesSection({
   candidates,
   notAtsReady,
@@ -56,7 +64,12 @@ export function CandidatesSection({
   const [tab, setTab] = useState<TabId>(() => tabSchema.parse(search.get("tab")));
   const [openId, setOpenId] = useState<string | null>(() => search.get("candidate"));
   const [focusInviteId, setFocusInviteId] = useState<string | null>(null);
-  const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ ranked: null, "not-ready": null });
+  const [query, setQuery] = useState("");
+  const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({
+    ranked: null,
+    "not-ready": null,
+    queued: null,
+  });
 
   const shownOpenId = candidates.some((candidate) => candidate.id === openId) ? openId : null;
 
@@ -64,14 +77,33 @@ export function CandidatesSection({
     if (openId && shownOpenId === null) writeSearch((params) => params.delete("candidate"));
   }, [openId, shownOpenId]);
 
+  const ranks = useMemo(
+    () => new Map(candidates.map((candidate, index) => [candidate.id, index + 1])),
+    [candidates],
+  );
+
+  const needle = query.trim().toLowerCase();
+  const matches = (name: string) => name.toLowerCase().includes(needle);
+  const shownCandidates = needle ? candidates.filter((c) => matches(c.full_name)) : candidates;
+  const shownNotReady = needle ? notAtsReady.filter((r) => matches(r.file_name)) : notAtsReady;
+  const shownQueued = needle ? queued.filter((r) => matches(r.file_name)) : queued;
+
   if (counts.resumes === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-lg border border-border surface-subtle px-6 py-12 text-center">
-        <Users className="mb-2 size-6 text-muted-foreground" aria-hidden />
-        <h3 className="text-heading-16">No resumes yet</h3>
-        <p className="max-w-sm text-copy-14 text-muted-foreground">
-          Ranked candidates will appear here once resumes are uploaded and analyzed.
-        </p>
+      <div className="flex flex-col">
+        <h2 id="candidates-heading" className="border-b border-border pb-3 text-heading-20">
+          Candidates
+        </h2>
+        <EmptyState
+          icon={Users}
+          title="No resumes yet"
+          body="Ranked candidates will appear here once resumes are uploaded and analyzed."
+          action={
+            <a href="#resumes" className={buttonVariants({ size: "lg" })}>
+              Add resumes
+            </a>
+          }
+        />
       </div>
     );
   }
@@ -121,11 +153,38 @@ export function CandidatesSection({
   const tabs: { id: TabId; label: string; count: number }[] = [
     { id: "ranked", label: "Ranked", count: candidates.length },
     { id: "not-ready", label: "Not ATS-ready", count: notAtsReady.length },
+    { id: "queued", label: "Queued", count: queued.length },
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div role="tablist" aria-label="Candidates" className="flex gap-1 border-b border-border">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-4 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 id="candidates-heading" className="text-heading-20">
+          Candidates
+        </h2>
+        <div className="relative sm:w-56">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Search candidates by name"
+            placeholder="Search candidates"
+            autoComplete="off"
+            spellCheck={false}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
+      <div
+        role="tablist"
+        aria-label="Candidate groups"
+        className="flex gap-5 overflow-x-auto border-b border-border"
+      >
         {tabs.map(({ id, label, count }) => {
           const selected = tab === id;
           return (
@@ -143,21 +202,23 @@ export function CandidatesSection({
               onClick={() => selectTab(id)}
               onKeyDown={onTabKeyDown}
               className={cn(
-                "focus-ring -mb-px inline-flex items-center gap-2 rounded-t-md border-b-2 px-3 py-2 text-label-14 font-medium transition-colors",
+                "focus-ring -mb-px inline-flex shrink-0 items-center gap-2 rounded-t-sm border-b-2 px-1 py-3 text-label-14 font-medium transition-colors",
                 selected
-                  ? "border-foreground text-foreground"
+                  ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               {label}
-              <span className="font-mono tabular-nums">({count})</span>
+              <span className="rounded-sm bg-muted px-1.5 py-0.5 text-label-12 text-muted-foreground tabular-nums">
+                {count}
+              </span>
             </button>
           );
         })}
       </div>
 
       {counts.unchecked > 0 || counts.awaiting_scoring > 0 ? (
-        <div className="flex flex-col gap-1 text-copy-14 text-muted-foreground">
+        <div className="mt-3 flex flex-col gap-1 text-copy-14 text-muted-foreground">
           {counts.unchecked > 0 ? (
             <p>{plural(counts.unchecked, "resume is", "resumes are")} not yet checked.</p>
           ) : null}
@@ -175,12 +236,20 @@ export function CandidatesSection({
         id="panel-ranked"
         aria-labelledby="tab-ranked"
         hidden={tab !== "ranked"}
-        className="flex flex-col gap-4"
+        className="mt-3 flex flex-col gap-3"
       >
-        <QueuedList resumes={queued} />
-        {candidates.length > 0 ? (
+        {candidates.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No scored candidates yet"
+            body="Analyze the resumes to rank the ATS-ready ones here."
+          />
+        ) : shownCandidates.length === 0 ? (
+          <EmptyState icon={Search} title="No candidates found" body="Try a different search." />
+        ) : (
           <RankedList
-            candidates={candidates}
+            candidates={shownCandidates}
+            ranks={ranks}
             topTalent={topTalent}
             jobTitle={jobTitle}
             openId={shownOpenId}
@@ -189,8 +258,6 @@ export function CandidatesSection({
             onInvite={openInvite}
             onInviteFocused={() => setFocusInviteId(null)}
           />
-        ) : (
-          <p className="text-copy-14 text-muted-foreground">No scored candidates yet.</p>
         )}
       </div>
       <div
@@ -198,9 +265,18 @@ export function CandidatesSection({
         id="panel-not-ready"
         aria-labelledby="tab-not-ready"
         hidden={tab !== "not-ready"}
-        className="flex flex-col gap-4"
+        className="mt-3 flex flex-col gap-3"
       >
-        <NotReadyList resumes={notAtsReady} />
+        <NotReadyList resumes={shownNotReady} totalCount={notAtsReady.length} />
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-queued"
+        aria-labelledby="tab-queued"
+        hidden={tab !== "queued"}
+        className="mt-3 flex flex-col gap-3"
+      >
+        <QueuedList resumes={shownQueued} totalCount={queued.length} />
       </div>
     </div>
   );

@@ -17,6 +17,8 @@ import { formatScore } from "@/lib/score";
 import { DESCRIPTION_MAX } from "@/lib/jobs/schemas";
 import { createJobAction, type CreateJobState } from "./actions";
 
+const labelStyle = "text-label-14 text-foreground";
+
 const initialState: CreateJobState = {
   values: {
     title: "",
@@ -47,7 +49,7 @@ export function NewJobForm() {
     state.fieldErrors.top_talent_threshold ?? state.fieldErrors.invite_threshold;
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-8">
+    <form action={formAction} noValidate className="flex flex-col gap-7">
       {state.formError ? (
         <Alert variant="destructive">
           <CircleAlert aria-hidden />
@@ -56,13 +58,13 @@ export function NewJobForm() {
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="title">Job title</Label>
+        <Label htmlFor="title" className={labelStyle}>Job title</Label>
         <Input
           id="title"
           name="title"
           required
           autoComplete="off"
-          placeholder="Senior backend engineer"
+          placeholder="e.g. Senior Product Designer"
           defaultValue={state.values.title}
           aria-invalid={titleError ? true : undefined}
           aria-describedby={titleError ? "title-error" : undefined}
@@ -72,13 +74,13 @@ export function NewJobForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="description">Job description</Label>
+        <Label htmlFor="description" className={labelStyle}>Job description</Label>
         <Textarea
           id="description"
           name="description"
           required
           rows={14}
-          placeholder="Paste the full job description here."
+          placeholder="Describe the role, responsibilities, and what you're looking for..."
           defaultValue={state.values.description}
           aria-invalid={descriptionError ? true : undefined}
           aria-describedby={
@@ -101,7 +103,15 @@ export function NewJobForm() {
         <FieldError id="description-error" message={descriptionError} />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <section aria-labelledby="thresholds-heading" className="flex flex-col gap-3">
+        <div>
+          <h2 id="thresholds-heading" className="text-heading-16">
+            Screening thresholds
+          </h2>
+          <p className="mt-1 text-copy-14 text-muted-foreground">
+            Tune how candidates are grouped by fit.
+          </p>
+        </div>
         <ThresholdSliders
           values={{ top_talent_threshold: topTalent, invite_threshold: invite }}
           onChange={(field, value) =>
@@ -112,9 +122,9 @@ export function NewJobForm() {
         <input type="hidden" name="top_talent_threshold" value={formatScore(topTalent)} />
         <input type="hidden" name="invite_threshold" value={formatScore(invite)} />
         <FieldError id="threshold-error" message={thresholdError} />
-      </div>
+      </section>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
         <Link href="/app" className={buttonVariants({ variant: "outline", size: "lg" })}>
           Cancel
         </Link>

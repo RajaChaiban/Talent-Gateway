@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { Brand } from "@/components/brand";
 import { buttonVariants } from "@/components/ui/button";
 import { ProductPreview } from "@/components/landing/product-preview";
-import { APP_DESCRIPTION, APP_NAME, JOB_THRESHOLD_DEFAULTS } from "@/lib/config";
-import { formatScore } from "@/lib/score";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/config";
 import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 
@@ -22,55 +22,37 @@ export const metadata: Metadata = {
 };
 
 /** One content column for every band of the page. */
-const column = "mx-auto w-full max-w-5xl px-4 sm:px-8";
-const band = cn(column, "py-12 sm:py-16");
-const h2 = "text-heading-24";
-const h3 = "text-heading-16";
-const body = "text-copy-14 text-muted-foreground";
+const column = "mx-auto w-full max-w-4xl px-5";
+const band = cn(column, "border-t border-border py-14 md:py-16");
+const eyebrow = "text-label-12 font-medium tracking-wide text-muted-foreground";
+const h2 = "mt-3 text-2xl font-semibold tracking-[-0.04em]";
 
 const steps = [
-  [
-    "Instant Pre-Screening",
-    "Every incoming resume is automatically inspected for text readability, key sections, an email address, a phone number, and pictures. Scanned images, corrupted files, missing contact details and photos are flagged upfront.",
-  ],
-  [
-    "Intelligent Candidate Scoring",
-    "Qualified applicants are evaluated against your job description to produce an objective match score, highlighting relevant experience, top strengths, and skill gaps.",
-  ],
-  [
-    "Radar Risk Detection",
-    "Identify red flags before scheduling interviews—including high job-hopping frequency, unexplained employment gaps, and AI-generated resume padding.",
-  ],
+  ["01", "Create a role", "Add the job description and set the standards that matter to your team."],
+  ["02", "Review the shortlist", "Candidates are organized by fit, with clear reasons behind every score."],
+  ["03", "Meet your next teammate", "Invite promising candidates and keep your hiring process moving."],
 ] as const;
 
 const differences = [
-  [
-    "Automated pre-filtering upfront",
-    "Incomplete or unreadable files are separated into an inspection tab so recruiters never waste time reading corrupt documents or scanned images.",
-  ],
-  [
-    "Custom thresholds per role",
-    `Set your own top-talent threshold and invite bar with two simple sliders. Start at ${formatScore(JOB_THRESHOLD_DEFAULTS.topTalent)} and ${formatScore(JOB_THRESHOLD_DEFAULTS.invite)} and adjust criteria to match the seniority of each opening.`,
-  ],
-  [
-    "Transparent, explainable criteria",
-    "Every evaluation comes with a concise summary of why the candidate was ranked high or low, giving hiring managers clear evidence for interview decisions.",
-  ],
+  "Clear, configurable criteria, not a mystery score.",
+  "Every shortlist comes with the context behind it.",
+  "Your team stays in control of who moves forward.",
+  "Designed to help humans decide, never decide for them.",
 ] as const;
 
 /*
  * The /login links do not prefetch: /login runs the auth proxy, and a visit
  * to this static page should cause no server work beyond the file itself.
  */
-function SignIn({ primary = false }: { primary?: boolean }) {
+function SignIn({ cta, label }: { cta: "primary" | "secondary"; label: string }) {
   return (
     <Link
       href="/login"
       prefetch={false}
-      data-cta={primary ? "primary" : "secondary"}
-      className={buttonVariants({ variant: primary ? "default" : "outline", size: "lg" })}
+      data-cta={cta}
+      className={buttonVariants({ size: "lg" })}
     >
-      Sign in
+      {label}
       <ArrowRight data-icon="inline-end" aria-hidden />
     </Link>
   );
@@ -82,124 +64,109 @@ export default function Home() {
     <div className="flex flex-1 flex-col">
       <header className="border-b border-border">
         <div className={cn(column, "flex h-16 items-center justify-between")}>
-          <span className="text-heading-16 font-semibold">{APP_NAME}</span>
+          <Brand />
+          <Link
+            href="/login"
+            prefetch={false}
+            className={buttonVariants({ variant: "outline", size: "lg" })}
+          >
+            Sign in
+          </Link>
         </div>
       </header>
 
-      <main className="flex-1 divide-y divide-border">
-        {/* Hero Section */}
+      <main className="flex-1">
         <section
           aria-labelledby="hero-title"
           data-section="hero"
-          className={cn(band, "grid gap-10 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-12")}
+          className={cn(
+            column,
+            "grid gap-10 pb-20 pt-16 md:grid-cols-[.92fr_1.08fr] md:items-center md:gap-12 md:pb-28 md:pt-24",
+          )}
         >
-          <div>
-            <h1 id="hero-title" className="text-heading-32">
-              Screen every resume. Rank your best candidates.
-            </h1>
-            <p className="mt-4 mb-6 max-w-xl text-copy-16 text-muted-foreground">
-              Drop in a batch of resumes against your job description. {APP_NAME} filters out unreadable files, scores candidate experience, and surfaces your top talent in seconds.
+          <div className="min-w-0">
+            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-label-12 text-muted-foreground">
+              <Sparkles className="size-3.5" aria-hidden />
+              A clearer way to hire
             </p>
-            <SignIn primary />
+            <h1
+              id="hero-title"
+              className="max-w-xl text-4xl leading-tight font-semibold tracking-[-0.04em] sm:text-5xl"
+            >
+              Find the right people, sooner.
+            </h1>
+            <p className="mt-5 max-w-md text-copy-16 text-muted-foreground">
+              Spend less time sorting resumes and more time meeting the people who can move your team forward.
+            </p>
+            <div className="mt-8">
+              <SignIn cta="primary" label="Get started" />
+            </div>
           </div>
           <ProductPreview />
         </section>
 
-        {/* How It Works */}
         <section aria-labelledby="how-it-works" className={band}>
+          <p className={eyebrow}>HOW IT WORKS</p>
           <h2 id="how-it-works" className={h2}>
-            How it works
+            A thoughtful process, from day one.
           </h2>
-          <ol className="surface-card mt-6 grid divide-y divide-border rounded-lg border border-border md:grid-cols-3 md:divide-x md:divide-y-0">
-            {steps.map(([name, text]) => (
-              <li key={name} className="space-y-2 p-6">
-                <h3 className={h3}>{name}</h3>
-                <p className={body}>{text}</p>
+          <ol className="mt-8 grid gap-8 sm:grid-cols-3">
+            {steps.map(([number, name, text]) => (
+              <li key={number}>
+                <span className="font-mono text-label-14 text-muted-foreground">{number}</span>
+                <h3 className="mt-3 text-heading-16">{name}</h3>
+                <p className="mt-2 text-copy-14 text-muted-foreground">{text}</p>
               </li>
             ))}
           </ol>
         </section>
 
-        {/* About Section */}
         <section id="about" aria-labelledby="about-heading" className={band}>
-          <div className="grid gap-8 lg:grid-cols-[1fr_2fr]">
-            <div>
-              <h2 id="about-heading" className={h2}>
-                Built for high-volume hiring
-              </h2>
-              <p className={cn(body, "mt-2 max-w-sm")}>
-                Engineered to help talent teams triage hundreds of applications in minutes without dropping qualified candidates.
-              </p>
-            </div>
-            <div className="space-y-4 text-copy-14 text-muted-foreground leading-relaxed">
-              <p>
-                <strong className="text-foreground">{APP_NAME}</strong> is an intelligent resume screening platform designed to streamline initial applicant review for recruiting teams and hiring managers.
-              </p>
-              <p>
-                Instead of forcing recruiters to spend hours skimming through hundreds of unstructured PDFs, {APP_NAME} automates the initial screening workflow. First, an automated check verifies document readability, section completeness, and contact details.
-              </p>
-              <p>
-                Qualified resumes are then analyzed against the specific requirements of the open role to produce calibrated match scores, summaries, and risk alerts. The result is a clean, ranked shortlist that helps hiring teams schedule the right interviews faster.
-              </p>
-            </div>
-          </div>
+          <p className={eyebrow}>ABOUT</p>
+          <h2 id="about-heading" className={h2}>
+            Hiring is human. The busywork shouldn&apos;t be.
+          </h2>
+          <p className="mt-4 max-w-2xl text-copy-14 text-muted-foreground">
+            {APP_NAME} helps recruiting teams make sense of a crowded inbox without losing sight of the person behind every resume. It gives teams a consistent, explainable starting point so people can spend their time where it counts: in conversation.
+          </p>
         </section>
 
-        {/* What Makes It Different */}
-        <section aria-labelledby="different" className={cn(band, "grid gap-8 lg:grid-cols-[1fr_2fr]")}>
-          <div>
-            <h2 id="different" className={h2}>
-              What makes it different
-            </h2>
-            <p className={cn(body, "mt-2 max-w-sm")}>
-              The parts of recruiting that should be fast, consistent and explainable are built that way.
-            </p>
-          </div>
-          <ul className="grid gap-8 sm:grid-cols-2">
-            {differences.map(([name, text]) => (
-              <li key={name} className="space-y-2 border-t border-border pt-4">
-                <h3 className={h3}>{name}</h3>
-                <p className={body}>{text}</p>
+        <section aria-labelledby="different" className={band}>
+          <p id="different" className={eyebrow}>
+            WHAT IS DIFFERENT
+          </p>
+          <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+            {differences.map((point) => (
+              <li key={point} className="flex items-start gap-3 text-copy-14">
+                <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                {point}
               </li>
             ))}
-            <li className="space-y-2 border-t border-border pt-4">
-              <h3 className={h3}>Structured scores and summaries</h3>
-              <p className={body}>
-                Every passing applicant receives an objective match score out of 10, accompanied by key candidate strengths and identified skill gaps.
-              </p>
-              <p className="flex gap-2 pt-1 font-mono text-label-12 text-muted-foreground">
-                <span className="rounded-full border border-border-strong px-2.5 py-1">
-                  ≥ 8.0 TOP TALENT
-                </span>
-                <span className="rounded-full border border-border-strong px-2.5 py-1">
-                  5.0–7.9 CONSIDER
-                </span>
-              </p>
-            </li>
           </ul>
         </section>
 
-        {/* Get Started Section */}
         <section
           aria-labelledby="get-started"
-          className={cn(band, "flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between")}
+          className={cn(column, "my-8")}
         >
-          <div>
-            <h2 id="get-started" className={h2}>
-              Try it with a real job.
-            </h2>
-            <p className={cn(body, "mt-2")}>
-              Sign in with your demo login, create a job and drop in a batch of resumes.
-            </p>
+          <div className="surface-subtle flex flex-col items-start justify-between gap-5 rounded-xl border border-border p-6 sm:flex-row sm:items-center sm:p-8">
+            <div>
+              <h2 id="get-started" className="text-xl font-semibold tracking-[-0.02em]">
+                Make room for better conversations.
+              </h2>
+              <p className="mt-2 text-copy-14 text-muted-foreground">
+                Start with a role. Find your next great teammate.
+              </p>
+            </div>
+            <SignIn cta="secondary" label="Sign in" />
           </div>
-          <SignIn />
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className={cn(column, "flex flex-col gap-1 py-8 text-label-14 sm:flex-row sm:justify-between")}>
-          <span className="font-medium text-foreground">{APP_NAME}</span>
-          <span className="text-muted-foreground">{APP_DESCRIPTION}</span>
+      <footer className={cn(column, "mt-10 border-t border-border")}>
+        <div className="flex flex-col gap-3 py-6 text-label-12 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <Brand />
+          <span>{APP_DESCRIPTION}</span>
         </div>
       </footer>
     </div>

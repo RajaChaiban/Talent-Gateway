@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import {
   Card,
@@ -8,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Brand } from "@/components/brand";
 import { safeRedirectPath } from "@/lib/auth/safe-redirect";
 import { APP_NAME } from "@/lib/config";
 import { LoginForm } from "./login-form";
@@ -22,18 +22,13 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="flex flex-1 flex-col items-center justify-center surface-subtle px-4 py-12">
       <div className="flex w-full max-w-sm flex-col gap-8">
-        <Link
-          href="/"
-          className="focus-ring self-center rounded-sm text-heading-16 text-foreground underline-offset-4 hover:underline"
-        >
-          {APP_NAME}
-        </Link>
-        <Card className="gap-6 py-6 [--card-spacing:--spacing(6)] sm:py-8 sm:[--card-spacing:--spacing(8)]">
+        <Brand className="self-center" />
+        <Card className="gap-6 rounded-xl py-6 [--card-spacing:--spacing(6)] sm:py-8 sm:[--card-spacing:--spacing(8)]">
           <CardHeader className="gap-1.5">
             <CardTitle>
-              <h1 className="text-heading-24">Sign in</h1>
+              <h1 className="text-2xl font-semibold tracking-[-0.04em]">Welcome back</h1>
             </CardTitle>
-            <CardDescription>Use the demo login you were given.</CardDescription>
+            <CardDescription>Sign in to continue to your workspace.</CardDescription>
           </CardHeader>
           <CardContent>
             <Suspense fallback={<LoginFormSkeleton />}>

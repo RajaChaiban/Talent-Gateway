@@ -23,20 +23,20 @@ export function ExpandableText({ text }: { text: string }) {
   }, [text, expanded]);
 
   return (
-    <div className="flex flex-col items-start gap-3">
+    <div className="flex flex-col items-start gap-2">
       <p
         ref={paragraph}
         id="job-description"
         className={cn(
-          "w-full max-w-prose whitespace-pre-wrap break-words text-copy-14 text-foreground",
-          !expanded && "line-clamp-8",
+          "w-full whitespace-pre-wrap break-words text-copy-14 leading-6 text-muted-foreground",
+          !expanded && "line-clamp-3",
         )}
       >
         {text}
       </p>
       {expanded || overflowing ? (
         <Button
-          variant="outline"
+          variant="link"
           size="sm"
           aria-expanded={expanded}
           aria-controls="job-description"

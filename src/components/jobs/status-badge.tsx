@@ -9,9 +9,17 @@ const STATUS_LABELS: Record<string, string> = {
   ERROR: "Error",
 };
 
+const STATUS_TONES: Record<string, string> = {
+  DONE: "border-success-border bg-success-subtle text-success",
+  ANALYZING: "border-warning-border bg-warning-subtle text-warning",
+  ERROR: "border-error-border bg-error-subtle text-error",
+};
+
 /** An unknown status is shown as it is rather than hidden. */
 export function JobStatusBadge({ status }: { status: string }) {
-  const variant =
-    status === "ERROR" ? "destructive" : status === "DONE" ? "default" : "secondary";
-  return <Badge variant={variant}>{STATUS_LABELS[status] ?? status}</Badge>;
+  return (
+    <Badge variant="secondary" className={STATUS_TONES[status]}>
+      {STATUS_LABELS[status] ?? status}
+    </Badge>
+  );
 }

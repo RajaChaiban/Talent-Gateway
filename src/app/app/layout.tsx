@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
+import { Brand } from "@/components/brand";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { APP_NAME } from "@/lib/config";
 import { signOut } from "./actions";
@@ -20,19 +20,14 @@ export default function RecruiterLayout({ children }: LayoutProps<"/app">) {
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b border-border bg-background">
-        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-4 px-4 sm:px-8">
-          <Link
-            href="/app"
-            className="focus-ring rounded-sm text-heading-16 text-foreground"
-          >
-            {APP_NAME}
-          </Link>
+        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-4 px-5">
+          <Brand href="/app" />
           <Suspense fallback={<AccountPlaceholder />}>
             <Account />
           </Suspense>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-8 sm:px-8 sm:py-10">
+      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-5 py-8 sm:py-10">
         <Suspense fallback={<div className="flex-1" aria-busy="true" />}>
           {children}
         </Suspense>
@@ -47,7 +42,7 @@ async function Account() {
 
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="min-w-0 truncate text-label-14 text-muted-foreground">
+      <span className="hidden min-w-0 truncate text-label-14 sm:inline text-muted-foreground">
         {check.user.email}
       </span>
       <form action={signOut}>
