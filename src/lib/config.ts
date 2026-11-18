@@ -25,7 +25,7 @@ export const RESUME_LIMITS = {
   uploadConcurrency: 3,
   extractTimeoutMs: 8_000,
   /** A PDF with more pages than this is refused before any text is read. */
-  maxPdfPages: 40,
+  maxPdfPages: 5,
   /** A DOCX whose zip lists more entries than this is refused before inflation. */
   maxDocxEntries: 500,
   /**
